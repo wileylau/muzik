@@ -366,52 +366,66 @@ class MuzikPlayer {
             this.currentSongLink = playData.link;
             this.currentAudioUrl = playData.flac_url;
             
-            // Update album art for desktop player
-            if (this.currentSongAlbumArt && playData.cover) {
-                this.currentSongAlbumArt.src = playData.cover;
-                this.currentSongAlbumArt.classList.remove('hidden');
-                const container = this.currentSongAlbumArt.closest('.album-art-container');
-                if (container) container.classList.add('has-album-art');
-            } else if (this.currentSongAlbumArt) {
-                this.currentSongAlbumArt.classList.add('hidden');
-                const container = this.currentSongAlbumArt.closest('.album-art-container');
-                if (container) container.classList.remove('has-album-art');
+            if (playData.cover) {
+                this.preloadAndSetAlbumArt(this.currentSongAlbumArt, playData.cover);
+                this.preloadAndSetAlbumArt(this.currentSongAlbumArtMobile, playData.cover);
+                this.preloadAndSetAlbumArt(this.fullscreenAlbumArt, playData.cover);
+                this.preloadAndSetAlbumArt(this.lyricsAlbumArt, playData.cover);
+            } else {
+                this.hideAlbumArt(this.currentSongAlbumArt);
+                this.hideAlbumArt(this.currentSongAlbumArtMobile);
+                this.hideAlbumArt(this.fullscreenAlbumArt);
+                this.hideAlbumArt(this.lyricsAlbumArt);
             }
-            
-            // Update album art for mobile player
-            if (this.currentSongAlbumArtMobile && playData.cover) {
-                this.currentSongAlbumArtMobile.src = playData.cover;
-                this.currentSongAlbumArtMobile.classList.remove('hidden');
-                const container = this.currentSongAlbumArtMobile.closest('.album-art-container');
-                if (container) container.classList.add('has-album-art');
-            } else if (this.currentSongAlbumArtMobile) {
-                this.currentSongAlbumArtMobile.classList.add('hidden');
-                const container = this.currentSongAlbumArtMobile.closest('.album-art-container');
-                if (container) container.classList.remove('has-album-art');
+        }
+    }
+
+    preloadAndSetAlbumArt(element, src) {
+        if (!element || !src) {
+            if (element) this.hideAlbumArt(element);
+            return;
+        }
+
+        element.classList.add('hidden');
+        const container = element.closest('.album-art-container');
+        if (container) container.classList.remove('has-album-art');
+
+        const img = new Image();
+        
+        img.onload = () => {
+            element.src = src;
+            element.classList.remove('hidden');
+            if (container) {
+                container.classList.add('has-album-art');
+                element.style.opacity = '0';
+                element.offsetHeight; // Trigger reflow
+                element.style.opacity = '1';
+                
+                setTimeout(() => {
+                    element.style.willChange = 'opacity';
+                    element.style.transform = 'translateZ(0)';
+                    container.style.willChange = 'opacity';
+                    container.style.transform = 'translateZ(0)';
+                }, 0);
             }
-            
-            // Update album art for fullscreen player
-            if (this.fullscreenAlbumArt && playData.cover) {
-                this.fullscreenAlbumArt.src = playData.cover;
-                this.fullscreenAlbumArt.classList.remove('hidden');
-                const container = this.fullscreenAlbumArt.closest('.album-art-container');
-                if (container) container.classList.add('has-album-art');
-            } else if (this.fullscreenAlbumArt) {
-                this.fullscreenAlbumArt.classList.add('hidden');
-                const container = this.fullscreenAlbumArt.closest('.album-art-container');
-                if (container) container.classList.remove('has-album-art');
-            }
-            
-            // Update album art for lyrics view
-            if (this.lyricsAlbumArt && playData.cover) {
-                this.lyricsAlbumArt.src = playData.cover;
-                this.lyricsAlbumArt.classList.remove('hidden');
-                const container = this.lyricsAlbumArt.closest('.album-art-container');
-                if (container) container.classList.add('has-album-art');
-            } else if (this.lyricsAlbumArt) {
-                this.lyricsAlbumArt.classList.add('hidden');
-                const container = this.lyricsAlbumArt.closest('.album-art-container');
-                if (container) container.classList.remove('has-album-art');
+        };
+        
+        img.onerror = () => {
+            element.classList.add('hidden');
+            if (container) container.classList.remove('has-album-art');
+        };
+        
+        img.src = src;
+    }
+
+    hideAlbumArt(element) {
+        if (element) {
+            element.classList.add('hidden');
+            const container = element.closest('.album-art-container');
+            if (container) {
+                container.classList.remove('has-album-art');
+                // Force reflow to ensure proper rendering
+                element.offsetHeight;
             }
         }
     }
