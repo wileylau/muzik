@@ -126,9 +126,30 @@ class MuzikPlayer {
             }
         });
         
-        if (this.downloadMp3) this.downloadMp3.addEventListener('click', () => this.downloadSong('mp3'));
-        if (this.downloadFlac) this.downloadFlac.addEventListener('click', () => this.downloadSong('flac'));
-        if (this.download24Bit) this.download24Bit.addEventListener('click', () => this.downloadSong('24bit'));
+        if (this.downloadMp3) {
+            this.downloadMp3.addEventListener('click', () => {
+                this.prepareAndDownload('mp3');
+            });
+        }
+        
+        if (this.downloadFlac) {
+            this.downloadFlac.addEventListener('click', () => {
+                this.prepareAndDownload('flac');
+            });
+        }
+        
+        if (this.download24Bit) {
+            this.download24Bit.addEventListener('click', () => {
+                this.hideDownloadModal();
+            });
+        }
+        
+        if (this.downloadLyricsBtn) {
+            this.downloadLyricsBtn.addEventListener('click', () => {
+                this.downloadLyrics();
+            });
+        }
+        
         if (this.cancelDownload) this.cancelDownload.addEventListener('click', () => this.hideDownloadModal());
 
         if (this.audioElement) {
@@ -1140,11 +1161,27 @@ class MuzikPlayer {
                 if (titleMatch && singerMatch && qualityMatch) {
                     if (this.download24Bit) {
                         this.download24Bit.classList.remove('hidden');
+                        if (track.music_url) {
+                            const artist = song.singer || 'Unknown Artist';
+                            const title = song.songname || 'Unknown Title';
+                            const fileName = `${artist} - ${title} (24Bit).flac`;
+                            this.download24Bit.href = track.music_url;
+                            this.download24Bit.download = fileName;
+                            this.download24Bit.target = '_blank';
+                        }
                     }
                     return;
                 } else if (qualityMatch) {
                     if (this.download24Bit) {
                         this.download24Bit.classList.remove('hidden');
+                        if (track.music_url) {
+                            const artist = song.singer || 'Unknown Artist';
+                            const title = song.songname || 'Unknown Title';
+                            const fileName = `${artist} - ${title} (24Bit).flac`;
+                            this.download24Bit.href = track.music_url;
+                            this.download24Bit.download = fileName;
+                            this.download24Bit.target = '_blank';
+                        }
                     }
                     return;
                 }
@@ -1163,7 +1200,7 @@ class MuzikPlayer {
         }
     }
 
-    async downloadSong(format) {
+    async prepareAndDownload(format) {
         if (this.currentIndex < 0 || this.currentIndex >= this.currentPlaylist.length) {
             alert('No song selected for download');
             return;
@@ -1178,21 +1215,21 @@ class MuzikPlayer {
         }
 
         try {
-            let downloadBtn;
+            let downloadDiv;
             if (format === 'mp3') {
-                downloadBtn = this.downloadMp3;
+                downloadDiv = this.downloadMp3;
             } else if (format === 'flac') {
-                downloadBtn = this.downloadFlac;
+                downloadDiv = this.downloadFlac;
             } else if (format === '24bit') {
-                downloadBtn = this.download24Bit;
+                downloadDiv = this.download24Bit;
             } else {
                 alert('Unsupported format');
                 return;
             }
             
-            const originalHtml = downloadBtn.innerHTML;
-            downloadBtn.innerHTML = '<div class="flex items-center space-x-3"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div><span>Preparing download...</span></div>';
-            downloadBtn.disabled = true;
+            const originalHtml = downloadDiv.innerHTML;
+            downloadDiv.innerHTML = '<div class="flex items-center space-x-3"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div><span>Preparing download...</span></div>';
+            downloadDiv.style.pointerEvents = 'none';
 
             let downloadUrl;
             let fileName;
@@ -1287,28 +1324,30 @@ class MuzikPlayer {
             document.body.removeChild(link);
             
             this.hideDownloadModal();
-                        
+            
+            alert(`Download started: ${fileName || 'song'}`);
+            
         } catch (error) {
             alert(`Failed to download song: ${error.message}`);
         } finally {
             setTimeout(() => {
-                let downloadBtn;
+                let downloadDiv;
                 if (format === 'mp3') {
-                    downloadBtn = this.downloadMp3;
+                    downloadDiv = this.downloadMp3;
                 } else if (format === 'flac') {
-                    downloadBtn = this.downloadFlac;
+                    downloadDiv = this.downloadFlac;
                 } else if (format === '24bit') {
-                    downloadBtn = this.download24Bit;
+                    downloadDiv = this.download24Bit;
                 }
                 
-                if (downloadBtn) {
-                    downloadBtn.disabled = false;
+                if (downloadDiv) {
+                    downloadDiv.style.pointerEvents = 'auto';
                     if (format === 'mp3') {
-                        downloadBtn.innerHTML = '<div class="flex items-center space-x-3"><i class="fas fa-music text-lg text-gray-700"></i><div class="text-left"><div class="font-semibold">MP3 (Lossy)</div><div class="text-sm text-gray-600">Smaller file size, good quality</div></div></div><i class="fas fa-download text-gray-600"></i>';
+                        downloadDiv.innerHTML = '<div class="flex items-center space-x-3"><i class="fas fa-music text-lg text-gray-700"></i><div class="text-left"><div class="font-semibold">MP3 (Lossy)</div><div class="text-sm text-gray-600">Smaller file size, good quality</div></div></div><i class="fas fa-download text-gray-600"></i>';
                     } else if (format === 'flac') {
-                        downloadBtn.innerHTML = '<div class="flex items-center space-x-3"><i class="fas fa-compact-disc text-lg text-gray-700"></i><div class="text-left"><div class="font-semibold">FLAC (16 Bit Lossless)</div><div class="text-sm text-gray-600">Larger file size, better quality</div></div></div><i class="fas fa-download text-gray-600"></i>';
+                        downloadDiv.innerHTML = '<div class="flex items-center space-x-3"><i class="fas fa-compact-disc text-lg text-gray-700"></i><div class="text-left"><div class="font-semibold">FLAC (Lossless)</div><div class="text-sm text-gray-600">Larger file size, best quality</div></div></div><i class="fas fa-download text-gray-600"></i>';
                     } else if (format === '24bit') {
-                        downloadBtn.innerHTML = '<div class="flex items-center space-x-3"><i class="fas fa-crown text-lg text-yellow-500"></i><div class="text-left"><div class="font-semibold">FLAC (24 Bit Lossless)</div><div class="text-sm text-gray-600">Largest file size, best quality. Available on some tracks only.</div></div></div><i class="fas fa-download text-gray-600"></i>';
+                        downloadDiv.innerHTML = '<div class="flex items-center space-x-3"><i class="fas fa-crown text-lg text-yellow-500"></i><div class="text-left"><div class="font-semibold">24Bit 至臻无损</div><div class="text-sm text-gray-600">最高品质音频</div></div></div><i class="fas fa-download text-gray-600"></i>';
                     }
                 }
             }, 1000);
