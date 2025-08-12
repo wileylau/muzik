@@ -51,6 +51,7 @@ class MuzikPlayer {
         this.downloadModal = document.getElementById('downloadModal');
         this.downloadMp3 = document.getElementById('downloadMp3');
         this.downloadFlac = document.getElementById('downloadFlac');
+        this.download24Bit = document.getElementById('download24Bit');
         this.cancelDownload = document.getElementById('cancelDownload');
         
         this.currentSongInfo = document.getElementById('currentSongInfo');
@@ -93,6 +94,9 @@ class MuzikPlayer {
         this.lyricsPrevBtn = document.getElementById('lyricsPrevBtn');
         this.lyricsNextBtn = document.getElementById('lyricsNextBtn');
         this.downloadLyricsBtn = document.getElementById('downloadLyricsBtn');
+        
+        // 24-bit API endpoint
+        this.api24BitBase = 'https://www.hhlqilongzhu.cn/api/dg_mgmusic_24bit.php';
     }
 
     bindEvents() {
@@ -124,6 +128,7 @@ class MuzikPlayer {
         
         if (this.downloadMp3) this.downloadMp3.addEventListener('click', () => this.downloadSong('mp3'));
         if (this.downloadFlac) this.downloadFlac.addEventListener('click', () => this.downloadSong('flac'));
+        if (this.download24Bit) this.download24Bit.addEventListener('click', () => this.downloadSong('24bit'));
         if (this.cancelDownload) this.cancelDownload.addEventListener('click', () => this.hideDownloadModal());
 
         if (this.audioElement) {
@@ -1064,10 +1069,90 @@ class MuzikPlayer {
         }
     }
     
-    showDownloadModal() {
+    async showDownloadModal() {
         if (this.downloadModal) {
             this.downloadModal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            
+            if (this.download24Bit) this.download24Bit.classList.add('hidden');
+            
+            await this.check24BitAvailability();
+        }
+    }
+    
+    async check24BitAvailability() {
+        if (this.currentIndex < 0 || this.currentIndex >= this.currentPlaylist.length) {
+            if (this.download24Bit) this.download24Bit.classList.add('hidden');
+            return;
+        }
+
+        const song = this.currentPlaylist[this.currentIndex];
+        const songName = song.songname || '';
+        const songArtist = song.singer || '';
+        
+        if (!songName || !songArtist) {
+            if (this.download24Bit) this.download24Bit.classList.add('hidden');
+            return;
+        }
+
+        try {
+            const query = `${songName} ${songArtist}`;
+            
+            const apiUrl = `${this.api24BitBase}?msg=${encodeURIComponent(query)}&n=1&type=json`;
+            
+            const response = await fetch(apiUrl);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data) {
+                if (this.download24Bit) this.download24Bit.classList.add('hidden');
+                return;
+            }
+            
+            if (data.code === 200 && data.title && data.singer && data.quality) {
+                const track = data;
+                
+                const normalizeString = (str) => {
+                    if (typeof str !== 'string') return '';
+                    return str.trim().toLowerCase().replace(/\s+/g, ' ');
+                };
+                
+                const removeBrackets = (str) => {
+                    if (typeof str !== 'string') return '';
+                    return str.replace(/\[.*?\]|\(.*?\)|{.*?}|\（.*?\）|\【.*?\】/g, '').trim();
+                };
+                
+                const normalizedSongName = normalizeString(removeBrackets(songName));
+                const normalizedTrackTitle = normalizeString(removeBrackets(track.title));
+                const normalizedSongArtist = normalizeString(removeBrackets(songArtist));
+                const normalizedTrackSinger = normalizeString(removeBrackets(track.singer));
+                const normalizedQuality = normalizeString("24bit至臻");
+                const normalizedTrackQuality = normalizeString(track.quality);
+                
+                const titleMatch = normalizedSongName === normalizedTrackTitle;
+                const singerMatch = normalizedSongArtist === normalizedTrackSinger;
+                const qualityMatch = normalizedQuality === normalizedTrackQuality;
+                
+                if (titleMatch && singerMatch && qualityMatch) {
+                    if (this.download24Bit) {
+                        this.download24Bit.classList.remove('hidden');
+                    }
+                    return;
+                } else if (qualityMatch) {
+                    if (this.download24Bit) {
+                        this.download24Bit.classList.remove('hidden');
+                    }
+                    return;
+                }
+            }
+            
+            if (this.download24Bit) this.download24Bit.classList.add('hidden');
+        } catch (error) {
+            if (this.download24Bit) this.download24Bit.classList.add('hidden');
         }
     }
     
@@ -1087,47 +1172,114 @@ class MuzikPlayer {
         const song = this.currentPlaylist[this.currentIndex];
         const songId = song.n;
         
-        if (!songId) {
+        if (!songId && format !== '24bit') {
             alert('Unable to download song: Missing song ID');
             return;
         }
 
         try {
-            const downloadBtn = format === 'mp3' ? this.downloadMp3 : this.downloadFlac;
+            let downloadBtn;
+            if (format === 'mp3') {
+                downloadBtn = this.downloadMp3;
+            } else if (format === 'flac') {
+                downloadBtn = this.downloadFlac;
+            } else if (format === '24bit') {
+                downloadBtn = this.download24Bit;
+            } else {
+                alert('Unsupported format');
+                return;
+            }
+            
             const originalHtml = downloadBtn.innerHTML;
             downloadBtn.innerHTML = '<div class="flex items-center space-x-3"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div><span>Preparing download...</span></div>';
             downloadBtn.disabled = true;
 
-            const br = format === 'flac' ? 1 : 2;
-            
-            const originalQuery = this.searchInput.value.trim();
-            
-            const response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=${br}&type=json`);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
             let downloadUrl;
-            if (format === 'flac') {
-                downloadUrl = data.flac_url;
+            let fileName;
+            
+            if (format === '24bit') {
+                const songName = song.songname || 'Unknown Title';
+                const songArtist = song.singer || 'Unknown Artist';
+                const query = `${songName} ${songArtist}`;
+                
+                const response = await fetch(`${this.api24BitBase}?msg=${encodeURIComponent(query)}&n=1&type=json`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data && data.code === 200 && data.title && data.singer && data.quality && data.music_url) {
+                    const track = data;
+                    
+                    const normalizeString = (str) => {
+                        if (typeof str !== 'string') return '';
+                        return str.trim().toLowerCase().replace(/\s+/g, ' ');
+                    };
+                    
+                    const removeBrackets = (str) => {
+                        if (typeof str !== 'string') return '';
+                        return str.replace(/\[.*?\]|\(.*?\)|{.*?}|\（.*?\）|\【.*?\】/g, '').trim();
+                    };
+                    
+                    const normalizedSongName = normalizeString(removeBrackets(songName));
+                    const normalizedTrackTitle = normalizeString(removeBrackets(track.title));
+                    const normalizedSongArtist = normalizeString(removeBrackets(songArtist));
+                    const normalizedTrackSinger = normalizeString(removeBrackets(track.singer));
+                    const normalizedQuality = normalizeString("24bit至臻");
+                    const normalizedTrackQuality = normalizeString(track.quality);
+                    
+                    const titleMatch = normalizedSongName === normalizedTrackTitle;
+                    const singerMatch = normalizedSongArtist === normalizedTrackSinger;
+                    const qualityMatch = normalizedQuality === normalizedTrackQuality;
+                    const hasMusicUrl = !!track.music_url;
+                    
+                    if ((titleMatch && singerMatch && qualityMatch && hasMusicUrl) || 
+                        (qualityMatch && hasMusicUrl)) {
+                        downloadUrl = track.music_url;
+                        fileName = `${songArtist} - ${songName} (24Bit).flac`;
+                    } else {
+                        throw new Error('24-bit track validation failed - mismatch in track data');
+                    }
+                } else {
+                    throw new Error('24-bit track not found in API response or missing required fields');
+                }
             } else {
-                downloadUrl = data.mp3_url || data.flac_url;
+                const br = format === 'flac' ? 1 : 2;
+                
+                const originalQuery = this.searchInput.value.trim();
+                
+                const response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=${br}&type=json`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (format === 'flac') {
+                    downloadUrl = data.flac_url;
+                } else {
+                    downloadUrl = data.mp3_url || data.flac_url;
+                }
+                
+                if (!downloadUrl) {
+                    throw new Error('Download URL not found in API response');
+                }
+                
+                const artist = song.singer || 'Unknown Artist';
+                const title = song.songname || 'Unknown Title';
+                fileName = `${artist} - ${title}.${format}`;
             }
             
             if (!downloadUrl) {
                 throw new Error('Download URL not found');
             }
             
-            const artist = song.singer || 'Unknown Artist';
-            const title = song.songname || 'Unknown Title';
-            const fileName = `${artist} - ${title}.${format}`;
-            
             const link = document.createElement('a');
             link.href = downloadUrl;
-            link.download = fileName;
+            link.download = fileName || `song.${format}`;
             link.target = '_blank';
             
             document.body.appendChild(link);
@@ -1135,20 +1287,29 @@ class MuzikPlayer {
             document.body.removeChild(link);
             
             this.hideDownloadModal();
-            
-            alert(`Download started: ${fileName}`);
-            
+                        
         } catch (error) {
-            console.error('Download error:', error);
             alert(`Failed to download song: ${error.message}`);
         } finally {
             setTimeout(() => {
-                const downloadBtn = format === 'mp3' ? this.downloadMp3 : this.downloadFlac;
+                let downloadBtn;
+                if (format === 'mp3') {
+                    downloadBtn = this.downloadMp3;
+                } else if (format === 'flac') {
+                    downloadBtn = this.downloadFlac;
+                } else if (format === '24bit') {
+                    downloadBtn = this.download24Bit;
+                }
+                
                 if (downloadBtn) {
                     downloadBtn.disabled = false;
-                    downloadBtn.innerHTML = format === 'mp3' ? 
-                        '<div class="flex items-center space-x-3"><i class="fas fa-music text-lg text-gray-700"></i><div class="text-left"><div class="font-semibold">MP3 (Lossy)</div><div class="text-sm text-gray-600">Smaller file size, good quality</div></div></div><i class="fas fa-download text-gray-600"></i>' :
-                        '<div class="flex items-center space-x-3"><i class="fas fa-compact-disc text-lg text-gray-700"></i><div class="text-left"><div class="font-semibold">FLAC (Lossless)</div><div class="text-sm text-gray-600">Larger file size, best quality</div></div></div><i class="fas fa-download text-gray-600"></i>';
+                    if (format === 'mp3') {
+                        downloadBtn.innerHTML = '<div class="flex items-center space-x-3"><i class="fas fa-music text-lg text-gray-700"></i><div class="text-left"><div class="font-semibold">MP3 (Lossy)</div><div class="text-sm text-gray-600">Smaller file size, good quality</div></div></div><i class="fas fa-download text-gray-600"></i>';
+                    } else if (format === 'flac') {
+                        downloadBtn.innerHTML = '<div class="flex items-center space-x-3"><i class="fas fa-compact-disc text-lg text-gray-700"></i><div class="text-left"><div class="font-semibold">FLAC (16 Bit Lossless)</div><div class="text-sm text-gray-600">Larger file size, better quality</div></div></div><i class="fas fa-download text-gray-600"></i>';
+                    } else if (format === '24bit') {
+                        downloadBtn.innerHTML = '<div class="flex items-center space-x-3"><i class="fas fa-crown text-lg text-yellow-500"></i><div class="text-left"><div class="font-semibold">FLAC (24 Bit Lossless)</div><div class="text-sm text-gray-600">Largest file size, best quality. Available on some tracks only.</div></div></div><i class="fas fa-download text-gray-600"></i>';
+                    }
                 }
             }, 1000);
         }
