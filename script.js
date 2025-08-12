@@ -1077,6 +1077,82 @@ class MuzikPlayer {
             document.body.style.overflow = 'auto';
         }
     }
+
+    async downloadSong(format) {
+        if (this.currentIndex < 0 || this.currentIndex >= this.currentPlaylist.length) {
+            alert('No song selected for download');
+            return;
+        }
+
+        const song = this.currentPlaylist[this.currentIndex];
+        const songId = song.n;
+        
+        if (!songId) {
+            alert('Unable to download song: Missing song ID');
+            return;
+        }
+
+        try {
+            const downloadBtn = format === 'mp3' ? this.downloadMp3 : this.downloadFlac;
+            const originalHtml = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '<div class="flex items-center space-x-3"><div class="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div><span>Preparing download...</span></div>';
+            downloadBtn.disabled = true;
+
+            const br = format === 'flac' ? 1 : 2;
+            
+            const originalQuery = this.searchInput.value.trim();
+            
+            const response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=${br}&type=json`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            let downloadUrl;
+            if (format === 'flac') {
+                downloadUrl = data.flac_url;
+            } else {
+                downloadUrl = data.mp3_url || data.flac_url;
+            }
+            
+            if (!downloadUrl) {
+                throw new Error('Download URL not found');
+            }
+            
+            const artist = song.singer || 'Unknown Artist';
+            const title = song.songname || 'Unknown Title';
+            const fileName = `${artist} - ${title}.${format}`;
+            
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = fileName;
+            link.target = '_blank';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            this.hideDownloadModal();
+            
+            alert(`Download started: ${fileName}`);
+            
+        } catch (error) {
+            console.error('Download error:', error);
+            alert(`Failed to download song: ${error.message}`);
+        } finally {
+            setTimeout(() => {
+                const downloadBtn = format === 'mp3' ? this.downloadMp3 : this.downloadFlac;
+                if (downloadBtn) {
+                    downloadBtn.disabled = false;
+                    downloadBtn.innerHTML = format === 'mp3' ? 
+                        '<div class="flex items-center space-x-3"><i class="fas fa-music text-lg text-gray-700"></i><div class="text-left"><div class="font-semibold">MP3 (Lossy)</div><div class="text-sm text-gray-600">Smaller file size, good quality</div></div></div><i class="fas fa-download text-gray-600"></i>' :
+                        '<div class="flex items-center space-x-3"><i class="fas fa-compact-disc text-lg text-gray-700"></i><div class="text-left"><div class="font-semibold">FLAC (Lossless)</div><div class="text-sm text-gray-600">Larger file size, best quality</div></div></div><i class="fas fa-download text-gray-600"></i>';
+                }
+            }, 1000);
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
