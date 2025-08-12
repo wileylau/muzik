@@ -69,40 +69,10 @@ main {
         display: none !important;
     }
     
-    /* Ensure search input takes available space */
-    #searchInput {
-        flex: 1 !important;
-        min-width: 0 !important; /* Allow flex item to shrink below content size */
-    }
-    
     /* Prevent search from moving to navbar on mobile */
     #compactSearch {
         display: none !important;
     }
-    
-    /* Mobile audio player layout */
-    #audioPlayer {
-        padding: 0 !important;
-    }
-    
-    #audioPlayer .max-w-6xl {
-        padding: 1rem;
-        max-width: 100%;
-    }
-    
-    /* Mobile player grid layout */
-    .mobile-player-grid {
-        display: grid !important;
-        grid-template-areas: 
-            "info controls"
-            "progress progress";
-        grid-template-columns: 1fr auto;
-        grid-template-rows: auto auto;
-        gap: 1rem;
-        align-items: center;
-    }
-    
-    .mobile-song-info {
     
     /* Mobile audio player layout */
     #audioPlayer {
@@ -153,93 +123,316 @@ main {
     }
 }
 
-/* Song item hover effects */
-.song-item {
+/* Progress bar container styling */
+.progress-container {
+    cursor: pointer;
+    position: relative;
+    text-align: left;
+}
+
+.progress-container:hover #progressBar {
+    box-shadow: 0 0 8px rgba(55, 65, 81, 0.3);
+}
+
+.progress-container::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 100%;
+    transform: translateY(-50%);
+    border-radius: 9999px;
+    background: transparent;
+    transition: background-color 0.2s;
+}
+
+.progress-container:hover::after {
+    background: rgba(55, 65, 81, 0.05);
+}
+
+/* Smooth transitions for all interactive elements */
+button, input, select {
     transition: all 0.2s ease-in-out;
 }
 
-.song-item:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+/* Focus styles for accessibility */
+button:focus,
+input:focus,
+select:focus {
+    outline: 2px solid #6b7280;
+    outline-offset: 2px;
 }
 
-/* Active song highlighting */
-.song-item.active {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-left: 6px solid #6b7280;
-    transform: translateX(4px);
-    box-shadow: 0 4px 12px rgba(55, 65, 81, 0.15);
+/* Custom scrollbar for results list */
+#resultsList {
+    max-height: 60vh;
+    overflow-y: auto;
 }
 
-.song-item.active .play-btn {
-    background-color: #6b7280 !important;
-    color: white !important;
+#resultsList::-webkit-scrollbar {
+    width: 6px;
 }
 
-.song-item.active .play-btn i {
-    transform: scale(1.1);
+#resultsList::-webkit-scrollbar-track {
+    background: #f9fafb;
 }
 
-/* Material Design elevation shadows */
-.elevation-1 {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+#resultsList::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
 }
 
-.elevation-2 {
-    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+#resultsList::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
 }
 
-.elevation-3 {
-    box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+/* Loading animation enhancement */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
 }
 
-/* Download modal styling */
-#downloadModal {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-#downloadModal .bg-white {
-    background: rgba(255, 255, 255, 0.98);
+/* Desktop Player Layout */
+.desktop-player-layout {
+    display: flex;
+    height: 80px;
 }
 
-/* Fullscreen now playing view */
-#fullscreenNowPlaying {
-    transform: translateY(100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+.desktop-player-controls {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+/* Fullscreen Lyrics Container */
+#fullscreenLyricsContainer {
+    width: 40%;
     background-color: white;
+    display: block;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+#fullscreenLyricsList {
+    max-height: 100%;
+    padding-right: 1rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-line;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+/* Hide scrollbars but keep functionality */
+#fullscreenLyricsList::-webkit-scrollbar {
+    display: none;
+}
+
+#fullscreenLyricsList {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.lyric-line {
+    transition: all 0.3s ease;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #9ca3af;
+    transform: scale(1);
+    transform-origin: center;
+    margin: 0.4rem 0;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-line;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    padding-right: 1rem;
+    padding-left: 0.5rem;
+    box-sizing: border-box;
+    max-width: 100%;
+    text-align: center;
+}
+
+/* Hide fullscreen lyrics container on mobile */
+@media (max-width: 768px) {
+    #fullscreenLyricsContainer {
+        display: none !important;
+    }
+    
+    .fullscreen-main-content {
+        width: 100% !important;
+    }
+    
+    .fullscreen-main-content .flex-1 {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .fullscreen-main-content .text-center {
+        width: 100%;
+    }
+    
+    .fullscreen-main-content .max-w-2xl {
+        max-width: 100%;
+        width: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        box-sizing: border-box;
+        text-align: left;
+    }
+    
+    .fullscreen-main-content .flex.items-center.space-x-4 {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+        justify-content: flex-start;
+    }
+    
+    .fullscreen-main-content .flex-1.bg-gray-300 {
+        flex: 1 1 auto;
+        min-width: 0;
+        text-align: left;
+    }
+    
+    .progress-container {
+        text-align: left;
+        justify-content: flex-start;
+    }
+    
+    #fullscreenProgressBar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 0%;
+    }
+}
+
+#fullscreenLyricsList {
+    max-height: 100%;
+}
+
+/* Lyrics View Styles */
+#lyricsView {
     z-index: 100;
 }
 
-#fullscreenNowPlaying:not(.hidden) {
-    transform: translateY(0);
+#lyricsContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Album art styling */
-.album-art-container {
-    position: relative;
-    overflow: hidden;
-}
-
-.album-art-container img {
-    position: absolute;
-    top: 0;
-    left: 0;
+#lyricsList {
+    max-height: 100%;
+    text-align: center;
+    padding: 1rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: opacity 0.3s ease;
+    box-sizing: border-box;
 }
 
-.album-art-container i {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    transition: opacity 0.3s ease;
+/* Lyrics view song info */
+#lyricsSongTitle,
+#lyricsSongArtist {
+    text-align: left;
 }
 
-/* Hide fallback icon when album art is present */
-.album-art-container.has-album-art i {
+.lyric-line {
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #9ca3af;
+    transform: scale(1);
+    transform-origin: center;
+    margin: 0.5rem 0;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    padding: 0.5rem 1rem;
+    box-sizing: border-box;
+    max-width: 100%;
+    display: block;
+    text-align: center;
+}
+
+.lyric-line.text-gray-900 {
+    color: #1f2937;
+    font-size: 1.5rem !important;
+}
+
+/* Hide mobile lyrics button on desktop */
+#mobileLyricsBtn {
     display: none;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+    #lyricsList {
+        text-align: center;
+        padding: 1rem;
+        overflow-x: hidden;
+        word-wrap: break-word;
+        word-break: break-word;
+        white-space: pre-line;
+        overflow-wrap: break-word;
+    }
+    
+    .lyric-line {
+        text-align: center;
+        transform-origin: center;
+        padding: 0.5rem 1rem;
+        max-width: 90vw;
+        margin: 0.5rem auto;
+        white-space: pre-line;
+    }
+    
+    .lyric-line.text-gray-900 {
+        color: #1f2937;
+        font-size: 1.3rem !important;
+    }
+}
+
+/* Hide mobile lyrics button on desktop */
+#mobileLyricsBtn,
+#mobileFullscreenLyricsBtn {
+    display: none;
+}
+
+/* Show mobile lyrics button on mobile */
+@media (max-width: 768px) {
+    #mobileLyricsBtn,
+    #mobileFullscreenLyricsBtn {
+        display: block;
+    }
+    
+    #mobileLyricsBtn.absolute {
+        position: absolute;
+    }
 }
