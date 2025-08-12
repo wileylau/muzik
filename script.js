@@ -356,7 +356,6 @@ class MuzikPlayer {
             if (data && data.flac_url) {
                 this.audioElement.src = data.flac_url;
                 this.currentAudioUrl = data.flac_url;
-                // Preserve song info while adding API data
                 this.currentSongData = {
                     ...song,
                     ...data
@@ -368,12 +367,169 @@ class MuzikPlayer {
                 
                 // Fetch lyrics after song is loaded
                 await this.fetchLyrics(song.songname, song.singer);
+                
+                await this.fetchAlbumArtFrom24Bit(song);
+                
+                await this.checkEarly24BitInfo(song);
             } else {
                 throw new Error('No audio URL found');
             }
         } catch (error) {
             console.error('Play error:', error);
             alert('Failed to play song. Please try another one.');
+        }
+    }
+
+    async fetchAlbumArtFrom24Bit(song) {
+        const songName = song.songname || '';
+        const songArtist = song.singer || '';
+        
+        if (!songName || !songArtist) {
+            if (this.currentSongData && this.currentSongData.cover) {
+                this.updateAlbumArtWithCover(this.currentSongData.cover);
+            }
+            return;
+        }
+
+        try {
+            const query = `${songName} ${songArtist}`;
+            
+            const apiUrl = `${this.api24BitBase}?msg=${encodeURIComponent(query)}&n=1&type=json`;
+            
+            const response = await fetch(apiUrl);
+            
+            if (!response.ok) {
+                if (this.currentSongData && this.currentSongData.cover) {
+                    this.updateAlbumArtWithCover(this.currentSongData.cover);
+                }
+                return;
+            }
+            
+            const data = await response.json();
+            
+            if (!data) {
+                if (this.currentSongData && this.currentSongData.cover) {
+                    this.updateAlbumArtWithCover(this.currentSongData.cover);
+                }
+                return;
+            }
+            
+            if (data.code === 200 && data.title && data.singer && data.cover) {
+                const track = data;
+                
+                const normalizeString = (str) => {
+                    if (typeof str !== 'string') return '';
+                    return str.trim().toLowerCase().replace(/\s+/g, ' ');
+                };
+                
+                const removeBrackets = (str) => {
+                    if (typeof str !== 'string') return '';
+                    return str.replace(/\[.*?\]|\(.*?\)|{.*?}|\（.*?\）|\【.*?\】/g, '').trim();
+                };
+                
+                const normalizedSongName = normalizeString(removeBrackets(songName));
+                const normalizedTrackTitle = normalizeString(removeBrackets(track.title));
+                const normalizedSongArtist = normalizeString(removeBrackets(songArtist));
+                const normalizedTrackSinger = normalizeString(removeBrackets(track.singer));
+                
+                const titleMatch = normalizedSongName === normalizedTrackTitle;
+                const singerMatch = normalizedSongArtist === normalizedTrackSinger;
+                
+                if (titleMatch && singerMatch) {
+                    this.updateAlbumArtWithCover(track.cover);
+                    
+                    if (this.currentSongData) {
+                        this.currentSongData.cover24Bit = track.cover;
+                    }
+                } else {
+                    if (this.currentSongData && this.currentSongData.cover) {
+                        this.updateAlbumArtWithCover(this.currentSongData.cover);
+                    }
+                }
+            } else if (this.currentSongData && this.currentSongData.cover) {
+                this.updateAlbumArtWithCover(this.currentSongData.cover);
+            }
+        } catch (error) {
+            if (this.currentSongData && this.currentSongData.cover) {
+                this.updateAlbumArtWithCover(this.currentSongData.cover);
+            }
+        }
+    }
+    
+    updateAlbumArtWithCover(coverUrl) {
+        if (this.currentSongAlbumArt) {
+            this.preloadAndSetAlbumArt(this.currentSongAlbumArt, coverUrl);
+        }
+        
+        if (this.currentSongAlbumArtMobile) {
+            this.preloadAndSetAlbumArt(this.currentSongAlbumArtMobile, coverUrl);
+        }
+        
+        if (this.fullscreenAlbumArt) {
+            this.preloadAndSetAlbumArt(this.fullscreenAlbumArt, coverUrl);
+        }
+        
+        if (this.lyricsAlbumArt) {
+            this.preloadAndSetAlbumArt(this.lyricsAlbumArt, coverUrl);
+        }
+    }
+
+    async checkEarly24BitInfo(song) {
+        const songName = song.songname || '';
+        const songArtist = song.singer || '';
+        
+        if (!songName || !songArtist) {
+            return;
+        }
+
+        try {
+            const query = `${songName} ${songArtist}`;
+            
+            const apiUrl = `${this.api24BitBase}?msg=${encodeURIComponent(query)}&n=1&type=json`;
+            
+            const response = await fetch(apiUrl);
+            
+            if (!response.ok) {
+                return;
+            }
+            
+            const data = await response.json();
+            
+            if (!data) {
+                return;
+            }
+            
+            if (data.code === 200 && data.title && data.singer && data.quality) {
+                const track = data;
+                
+                const normalizeString = (str) => {
+                    if (typeof str !== 'string') return '';
+                    return str.trim().toLowerCase().replace(/\s+/g, ' ');
+                };
+                
+                const removeBrackets = (str) => {
+                    if (typeof str !== 'string') return '';
+                    return str.replace(/\[.*?\]|\(.*?\)|{.*?}|\（.*?\）|\【.*?\】/g, '').trim();
+                };
+                
+                const normalizedSongName = normalizeString(removeBrackets(songName));
+                const normalizedTrackTitle = normalizeString(removeBrackets(track.title));
+                const normalizedSongArtist = normalizeString(removeBrackets(songArtist));
+                const normalizedTrackSinger = normalizeString(removeBrackets(track.singer));
+                const normalizedQuality = normalizeString("24bit至臻");
+                const normalizedTrackQuality = normalizeString(track.quality);
+                
+                const titleMatch = normalizedSongName === normalizedTrackTitle;
+                const singerMatch = normalizedSongArtist === normalizedTrackSinger;
+                const qualityMatch = normalizedQuality === normalizedTrackQuality;
+                
+                if (this.currentSongData) {
+                    this.currentSongData.has24Bit = (titleMatch && singerMatch && qualityMatch);
+                    this.currentSongData.musicUrl24Bit = track.music_url || null;
+                }
+            }
+        } catch (error) {
+            return;
         }
     }
 
@@ -418,17 +574,6 @@ class MuzikPlayer {
             this.currentSongLink = playData.link;
             this.currentAudioUrl = playData.flac_url;
             
-            if (playData.cover) {
-                this.preloadAndSetAlbumArt(this.currentSongAlbumArt, playData.cover);
-                this.preloadAndSetAlbumArt(this.currentSongAlbumArtMobile, playData.cover);
-                this.preloadAndSetAlbumArt(this.fullscreenAlbumArt, playData.cover);
-                this.preloadAndSetAlbumArt(this.lyricsAlbumArt, playData.cover);
-            } else {
-                this.hideAlbumArt(this.currentSongAlbumArt);
-                this.hideAlbumArt(this.currentSongAlbumArtMobile);
-                this.hideAlbumArt(this.fullscreenAlbumArt);
-                this.hideAlbumArt(this.lyricsAlbumArt);
-            }
         }
     }
 
@@ -1097,11 +1242,40 @@ class MuzikPlayer {
             
             if (this.download24Bit) this.download24Bit.classList.add('hidden');
             
-            await this.check24BitAvailability();
+            if (this.currentSongData && this.currentSongData.has24Bit && this.currentSongData.musicUrl24Bit) {
+                if (this.download24Bit) {
+                    this.download24Bit.classList.remove('hidden');
+                    const artist = this.currentSongData.singer || 'Unknown Artist';
+                    const title = this.currentSongData.songname || 'Unknown Title';
+                    const fileName = `${artist} - ${title} (24Bit).flac`;
+                    this.download24Bit.href = this.currentSongData.musicUrl24Bit;
+                    this.download24Bit.download = fileName;
+                    this.download24Bit.target = '_blank';
+                }
+            } else {
+                await this.check24BitAvailability();
+            }
         }
     }
     
     async check24BitAvailability() {
+        if (this.currentSongData && this.currentSongData.has24Bit) {
+            if (this.currentSongData.musicUrl24Bit) {
+                if (this.download24Bit) {
+                    this.download24Bit.classList.remove('hidden');
+                    const artist = this.currentSongData.singer || 'Unknown Artist';
+                    const title = this.currentSongData.songname || 'Unknown Title';
+                    const fileName = `${artist} - ${title} (24Bit).flac`;
+                    this.download24Bit.href = this.currentSongData.musicUrl24Bit;
+                    this.download24Bit.download = fileName;
+                    this.download24Bit.target = '_blank';
+                }
+            } else {
+                if (this.download24Bit) this.download24Bit.classList.add('hidden');
+            }
+            return;
+        }
+        
         if (this.currentIndex < 0 || this.currentIndex >= this.currentPlaylist.length) {
             if (this.download24Bit) this.download24Bit.classList.add('hidden');
             return;
