@@ -77,7 +77,7 @@ class MuzikPlayer {
         });
         
         const header = document.querySelector('h1');
-        if (header) header.addEventListener('click', () => this.restoreMainSearch());
+        if (header) header.addEventListener('click', () => location.reload());
 
         if (this.playPauseBtn) this.playPauseBtn.addEventListener('click', () => this.togglePlayPause());
         if (this.prevBtn) this.prevBtn.addEventListener('click', () => this.playPrevious());
