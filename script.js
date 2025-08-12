@@ -1,4 +1,4 @@
-class MusicPlayer {
+class MuzikPlayer {
     constructor() {
         this.currentPlaylist = [];
         this.currentIndex = -1;
@@ -783,7 +783,7 @@ class MusicPlayer {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const player = new MusicPlayer();
+    const player = new MuzikPlayer();
     
     window.addEventListener('resize', () => {
         if (player.audioPlayer && !player.audioPlayer.classList.contains('hidden')) {

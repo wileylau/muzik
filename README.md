@@ -1,10 +1,10 @@
-# Web Music Player
+# Muzik
 
-A clean, monochrome web-based music player with Material Design-inspired UI using Tailwind CSS.
+A clean, monochrome web-based music player called Muzik with Material Design-inspired UI using Tailwind CSS.
 
 ## Features
 
-- **Search Functionality**: Search for music using the KuWo Music API
+- **Search Functionality**: Search for music using the KuWo Music API on Muzik
 - **Clean UI**: Monochrome, Material Design-inspired interface
 - **Audio Controls**: Play, pause, previous, next, volume control, and progress seeking
 - **Responsive Design**: Works on desktop and mobile devices
@@ -15,7 +15,7 @@ A clean, monochrome web-based music player with Material Design-inspired UI usin
 1. **Search for Music**:
    - Enter a search term in the search box
    - Optionally adjust the number of results (10, 20, or 30)
-   - Click "Search" or press Enter
+   - Click "Search" or press Enter on Muzik
 
 2. **Play Music**:
    - Click on any song from the search results to start playing
@@ -67,7 +67,7 @@ A clean, monochrome web-based music player with Material Design-inspired UI usin
 
 ## Notes
 
-- The player uses a third-party API for music content
+- The player uses a third-party API for music content on Muzik
 - Audio quality is set to high quality FLAC format
 - The interface is optimized for both desktop and mobile use
 - CORS may need to be handled depending on your browser and server setup
