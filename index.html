@@ -61,13 +61,13 @@
     <main class="max-w-6xl mx-auto px-6 py-12">
         <!-- Search Section -->
         <div id="mainSearchSection" class="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 mb-12 transition-all duration-500">
-            <div class="mb-6">
+            <div class="mb-6 search-header">
                 <h2 class="text-xl font-medium text-gray-900 mb-2">Discover Music</h2>
                 <p class="text-gray-600">Search for your favorite songs and artists</p>
             </div>
             
-            <div class="flex flex-col space-y-6">
-                <div class="flex space-x-4 mobile-search-layout">
+            <div class="flex flex-col space-y-6 search-content">
+                <div class="flex space-x-4 mobile-search-layout search-inputs">
                     <div class="flex-1 relative">
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <i class="fas fa-search text-gray-400"></i>
@@ -81,10 +81,10 @@
                     </div>
                     <button 
                         id="searchBtn"
-                        class="px-8 py-4 bg-gray-700 text-white rounded-xl hover:bg-gray-800 transition-all duration-200 flex items-center space-x-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                        class="search-button px-4 py-4 bg-gray-700 text-white rounded-xl hover:bg-gray-800 transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     >
                         <i class="fas fa-search"></i>
-                        <span class="font-medium">Search</span>
+                        <span class="search-button-text font-medium ml-2">Search</span>
                     </button>
                 </div>
             </div>
@@ -114,10 +114,16 @@
             <div class="max-w-6xl mx-auto px-6 py-6">
                 <!-- Desktop Layout -->
                 <div class="desktop-player-layout flex items-center space-x-6">
+                    <!-- Album Art (Top Left) -->
+                    <div class="album-art-container w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <img id="currentSongAlbumArt" src="" alt="Album Art" class="w-full h-full object-cover hidden">
+                        <i class="fas fa-music text-gray-400"></i>
+                    </div>
+                    
                     <!-- Song Info -->
-                    <div class="flex-1 min-w-0">
-                        <div id="currentSongTitle" class="text-lg font-semibold text-gray-900 truncate"></div>
-                        <div id="currentSongArtist" class="text-sm text-gray-600 truncate"></div>
+                    <div id="currentSongInfo" class="flex-1 min-w-0 cursor-pointer">
+                        <div id="currentSongTitle" class="text-lg font-semibold text-gray-900 truncate">Nothing is Playing</div>
+                        <div id="currentSongArtist" class="text-sm text-gray-600 truncate">No Artist</div>
                     </div>
                     
                     <!-- Controls -->
@@ -152,10 +158,10 @@
                 
                 <!-- Mobile Layout -->
                 <div class="mobile-player-grid hidden">
-                    <!-- Song Info (Bottom Left) -->
-                    <div class="mobile-song-info">
-                        <div id="currentSongTitleMobile" class="text-base font-semibold text-gray-900 truncate"></div>
-                        <div id="currentSongArtistMobile" class="text-sm text-gray-600 truncate"></div>
+                    <!-- Song Info (Top Left) -->
+                    <div id="currentSongInfoMobile" class="mobile-song-info cursor-pointer">
+                        <div id="currentSongTitleMobile" class="text-base font-semibold text-gray-900 truncate">Nothing is Playing</div>
+                        <div id="currentSongArtistMobile" class="text-sm text-gray-600 truncate">No Artist</div>
                     </div>
                     
                     <!-- Controls (Bottom Right) -->
@@ -183,6 +189,68 @@
             </div>
         </div>
     </main>
+
+    <!-- Fullscreen Now Playing View -->
+    <div id="fullscreenNowPlaying" class="hidden fixed inset-0 bg-white z-50 overflow-hidden">
+        <!-- Close Button (Top Right) -->
+        <button id="closeFullscreenBtn" class="absolute top-6 right-6 text-gray-600 hover:text-gray-900 p-2 rounded-full hover:bg-gray-100 transition-all duration-200">
+            <i class="fas fa-times text-2xl"></i>
+        </button>
+        
+        <!-- Collapse Button (Top Center - Mobile Only) -->
+        <button id="collapseFullscreenBtn" class="absolute top-6 left-1/2 transform -translate-x-1/2 text-gray-600 hover:text-gray-900 p-2 rounded-full hover:bg-gray-100 transition-all duration-200 hidden">
+            <i class="fas fa-chevron-down text-2xl"></i>
+        </button>
+        
+        <!-- Content Container -->
+        <div class="flex flex-col h-full pt-16 pb-8">
+            <!-- Album Art -->
+            <div class="flex-1 flex items-center justify-center px-6">
+                <div class="album-art-container w-64 h-64 md:w-80 md:h-80 bg-gray-200 rounded-2xl shadow-lg overflow-hidden flex items-center justify-center">
+                    <img id="fullscreenAlbumArt" src="" alt="Album Art" class="w-full h-full object-cover hidden">
+                    <i class="fas fa-music text-gray-400 text-6xl"></i>
+                </div>
+            </div>
+            
+            <!-- Song Info -->
+            <div class="px-6 py-8 text-center">
+                <h2 id="fullscreenSongTitle" class="text-2xl md:text-3xl font-bold text-gray-900 mb-2 truncate"></h2>
+                <p id="fullscreenSongArtist" class="text-lg md:text-xl text-gray-600 mb-8"></p>
+                
+                <!-- Progress Bar -->
+                <div class="max-w-2xl mx-auto mb-8">
+                    <div class="flex items-center space-x-4 mb-2">
+                        <span id="fullscreenCurrentTime" class="text-sm text-gray-600 w-12 font-mono">0:00</span>
+                        <div class="flex-1 bg-gray-300 rounded-full h-2 progress-container cursor-pointer">
+                            <div id="fullscreenProgressBar" class="bg-gray-700 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
+                        </div>
+                        <span id="fullscreenDuration" class="text-sm text-gray-600 w-12 font-mono">0:00</span>
+                    </div>
+                </div>
+                
+                <!-- Controls -->
+                <div class="flex justify-center items-center space-x-8 mb-8">
+                    <button id="fullscreenPrevBtn" class="text-gray-600 hover:text-gray-900 p-3 rounded-full hover:bg-gray-100 transition-all duration-200">
+                        <i class="fas fa-step-backward text-2xl"></i>
+                    </button>
+                    <button id="fullscreenPlayPauseBtn" class="bg-gray-700 text-white rounded-full w-16 h-16 flex items-center justify-center hover:bg-gray-800 transition-all duration-200 shadow-lg">
+                        <i class="fas fa-play text-2xl"></i>
+                    </button>
+                    <button id="fullscreenNextBtn" class="text-gray-600 hover:text-gray-900 p-3 rounded-full hover:bg-gray-100 transition-all duration-200">
+                        <i class="fas fa-step-forward text-2xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Download Button -->
+                <div class="flex justify-center">
+                    <button id="fullscreenDownloadBtn" class="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-full transition-all duration-200 flex items-center space-x-2">
+                        <i class="fas fa-download"></i>
+                        <span>Download</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Audio Element -->
     <audio id="audioElement" preload="metadata"></audio>
