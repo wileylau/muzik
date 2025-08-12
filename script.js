@@ -228,6 +228,32 @@ class MuzikPlayer {
         });
 
         this.showSearchResults();
+        
+        this.scrollToSearchResultsTop();
+    }
+
+    scrollToSearchResultsTop() {
+        if (this.searchResults) {
+            this.searchResults.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        } else {
+            const mainElement = document.querySelector('main');
+            if (mainElement) {
+                mainElement.scrollTo({ 
+                    top: 0, 
+                    behavior: 'smooth' 
+                });
+            }
+        }
+        
+        if (this.resultsList) {
+            this.resultsList.scrollTo({ 
+                top: 0, 
+                behavior: 'smooth' 
+            });
+        }
     }
 
     createSongElement(song, index) {
@@ -680,6 +706,9 @@ class MuzikPlayer {
 
         this.searchInput.value = query;
         await this.performSearch();
+        
+        // Scroll to top of search results after compact search
+        this.scrollToSearchResultsTop();
     }
 
     shrinkSearchBar() {
