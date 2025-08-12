@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gray-850': '#1f2937',
+                        'gray-750': '#374151',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 shadow-sm">
+        <div class="max-w-6xl mx-auto px-6 py-6">
+            <div class="flex items-center justify-between">
+                <h1 class="text-3xl font-light text-gray-900 flex items-center cursor-pointer hover:text-gray-700 transition-colors duration-200" title="Click to restore search">
+                    <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-music text-white text-lg"></i>
+                    </div>
+                    Music Player
+                </h1>
+                <!-- Compact Search (Hidden by default) -->
+                <div id="compactSearch" class="hidden flex items-center space-x-3">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-500 text-sm"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="compactSearchInput" 
+                            placeholder="Search music..."
+                            class="w-64 pl-10 pr-4 py-2 border-2 border-gray-300 bg-white text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition-all placeholder-gray-500"
+                        >
+                    </div>
+                    <button 
+                        id="compactSearchBtn"
+                        class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition-all duration-200 flex items-center space-x-2"
+                    >
+                        <i class="fas fa-search text-sm"></i>
+                        <span class="font-medium">Search</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-12">
+        <!-- Search Section -->
+        <div id="mainSearchSection" class="bg-white border border-gray-200 rounded-2xl shadow-lg p-8 mb-12 transition-all duration-500">
+            <div class="mb-6">
+                <h2 class="text-xl font-medium text-gray-900 mb-2">Discover Music</h2>
+                <p class="text-gray-600">Search for your favorite songs and artists</p>
+            </div>
+            
+            <div class="flex flex-col space-y-6">
+                <div class="flex space-x-4 mobile-search-layout">
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Search for music..."
+                            class="w-full pl-12 pr-4 py-4 border-2 border-gray-300 bg-white text-gray-900 rounded-xl focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none transition-all text-lg placeholder-gray-400"
+                        >
+                    </div>
+                    <button 
+                        id="searchBtn"
+                        class="px-8 py-4 bg-gray-700 text-white rounded-xl hover:bg-gray-800 transition-all duration-200 flex items-center space-x-3 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    >
+                        <i class="fas fa-search"></i>
+                        <span class="font-medium">Search</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="hidden text-center py-12">
+            <div class="inline-flex flex-col items-center space-y-4">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-blue-500"></div>
+                <div class="text-gray-600 font-medium">Searching for music...</div>
+            </div>
+        </div>
+
+        <!-- Search Results -->
+        <div id="searchResults" class="hidden bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+            <div class="p-6 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-xl font-semibold text-gray-900">Search Results</h2>
+                <p class="text-gray-600 mt-1">Click on any song to start playing</p>
+            </div>
+            <div id="resultsList" class="divide-y divide-gray-200">
+                <!-- Results will be populated here -->
+            </div>
+        </div>
+
+        <!-- Audio Player -->
+        <div id="audioPlayer" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg backdrop-blur-sm">
+            <div class="max-w-6xl mx-auto px-6 py-6">
+                <!-- Desktop Layout -->
+                <div class="desktop-player-layout flex items-center space-x-6">
+                    <!-- Song Info -->
+                    <div class="flex-1 min-w-0">
+                        <div id="currentSongTitle" class="text-lg font-semibold text-gray-900 truncate"></div>
+                        <div id="currentSongArtist" class="text-sm text-gray-600 truncate"></div>
+                    </div>
+                    
+                    <!-- Controls -->
+                    <div class="flex items-center space-x-6">
+                        <button id="prevBtn" class="text-gray-600 hover:text-gray-900 transition-all duration-200 p-2 rounded-full hover:bg-gray-100">
+                            <i class="fas fa-step-backward text-lg"></i>
+                        </button>
+                        <button id="playPauseBtn" class="bg-gray-700 text-white rounded-full w-14 h-14 flex items-center justify-center hover:bg-gray-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+                            <i class="fas fa-play text-lg"></i>
+                        </button>
+                        <button id="nextBtn" class="text-gray-600 hover:text-gray-900 transition-all duration-200 p-2 rounded-full hover:bg-gray-100">
+                            <i class="fas fa-step-forward text-lg"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Progress -->
+                    <div class="flex-1 flex items-center space-x-4">
+                        <span id="currentTime" class="text-sm text-gray-600 w-12 font-mono">0:00</span>
+                        <div class="flex-1 bg-gray-300 rounded-full h-2 progress-container cursor-pointer hover:h-3 transition-all duration-200">
+                            <div id="progressBar" class="bg-gray-700 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
+                        </div>
+                        <span id="duration" class="text-sm text-gray-600 w-12 font-mono">0:00</span>
+                    </div>
+                    
+                    <!-- Download Button -->
+                    <div class="flex items-center space-x-3">
+                        <button id="downloadBtn" class="text-gray-600 hover:text-gray-900 transition-all duration-200 p-2 rounded-full hover:bg-gray-100" title="Download Song">
+                            <i class="fas fa-download text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mobile Layout -->
+                <div class="mobile-player-grid hidden">
+                    <!-- Song Info (Bottom Left) -->
+                    <div class="mobile-song-info">
+                        <div id="currentSongTitleMobile" class="text-base font-semibold text-gray-900 truncate"></div>
+                        <div id="currentSongArtistMobile" class="text-sm text-gray-600 truncate"></div>
+                    </div>
+                    
+                    <!-- Controls (Bottom Right) -->
+                    <div class="mobile-controls flex items-center space-x-3">
+                        <button id="prevBtnMobile" class="text-gray-600 hover:text-gray-900 transition-all duration-200 p-2 rounded-full hover:bg-gray-100">
+                            <i class="fas fa-step-backward"></i>
+                        </button>
+                        <button id="playPauseBtnMobile" class="text-gray-600 hover:text-gray-900 rounded-full flex items-center justify-center transition-all duration-200 p-2 hover:bg-gray-100">
+                            <i class="fas fa-play text-lg"></i>
+                        </button>
+                        <button id="nextBtnMobile" class="text-gray-600 hover:text-gray-900 transition-all duration-200 p-2 rounded-full hover:bg-gray-100">
+                            <i class="fas fa-step-forward"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Progress Bar (Full Width Bottom) -->
+                    <div class="mobile-progress flex items-center space-x-3">
+                        <span id="currentTimeMobile" class="text-xs text-gray-600 w-10 font-mono">0:00</span>
+                        <div class="flex-1 bg-gray-300 rounded-full h-2 progress-container cursor-pointer">
+                            <div id="progressBarMobile" class="bg-gray-700 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
+                        </div>
+                        <span id="durationMobile" class="text-xs text-gray-600 w-10 font-mono">0:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Audio Element -->
+    <audio id="audioElement" preload="metadata"></audio>
+
+    <!-- Download Format Selection Modal -->
+    <div id="downloadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white border border-gray-200 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="text-center mb-6">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Choose Download Format</h3>
+                <p class="text-gray-600">Select your preferred audio quality</p>
+            </div>
+            
+            <div class="space-y-4">
+                <button id="downloadMp3" class="w-full p-4 bg-gray-50 hover:bg-gray-100 text-gray-900 rounded-xl transition-all duration-200 flex items-center justify-between border border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-music text-lg text-gray-700"></i>
+                        <div class="text-left">
+                            <div class="font-semibold">MP3 (Lossy)</div>
+                            <div class="text-sm text-gray-600">Smaller file size, good quality</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-download text-gray-600"></i>
+                </button>
+                
+                <button id="downloadFlac" class="w-full p-4 bg-gray-50 hover:bg-gray-100 text-gray-900 rounded-xl transition-all duration-200 flex items-center justify-between border border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-compact-disc text-lg text-gray-700"></i>
+                        <div class="text-left">
+                            <div class="font-semibold">FLAC (Lossless)</div>
+                            <div class="text-sm text-gray-600">Larger file size, best quality</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-download text-gray-600"></i>
+                </button>
+            </div>
+            
+            <button id="cancelDownload" class="w-full mt-6 p-3 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl transition-all duration-200">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

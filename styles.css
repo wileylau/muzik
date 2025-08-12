@@ -1,0 +1,209 @@
+/* Custom styles for the music player */
+
+/* Apply Inter font globally */
+* {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Search animation styles */
+#compactSearch {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#mainSearchSection {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Progress bar container styling */
+.progress-container {
+    cursor: pointer;
+    position: relative;
+}
+
+.progress-container:hover #progressBar {
+    box-shadow: 0 0 8px rgba(55, 65, 81, 0.3);
+}
+
+.progress-container::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 100%;
+    transform: translateY(-50%);
+    border-radius: 9999px;
+    background: transparent;
+    transition: background-color 0.2s;
+}
+
+.progress-container:hover::after {
+    background: rgba(55, 65, 81, 0.05);
+}
+
+/* Smooth transitions for all interactive elements */
+button, input, select {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Focus styles for accessibility */
+button:focus,
+input:focus,
+select:focus {
+    outline: 2px solid #6b7280;
+    outline-offset: 2px;
+}
+
+/* Custom scrollbar for results list */
+#resultsList {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+#resultsList::-webkit-scrollbar {
+    width: 6px;
+}
+
+#resultsList::-webkit-scrollbar-track {
+    background: #f9fafb;
+}
+
+#resultsList::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+#resultsList::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Loading animation enhancement */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    /* Mobile search layout */
+    .mobile-search-layout {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    .mobile-search-layout > * {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+    
+    /* Prevent search from moving to navbar on mobile */
+    #compactSearch {
+        display: none !important;
+    }
+    
+    /* Mobile audio player layout */
+    #audioPlayer {
+        padding: 0 !important;
+    }
+    
+    #audioPlayer .max-w-6xl {
+        padding: 1rem;
+        max-width: 100%;
+    }
+    
+    /* Mobile player grid layout */
+    .mobile-player-grid {
+        display: grid !important;
+        grid-template-areas: 
+            "info controls"
+            "progress progress";
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .mobile-song-info {
+        grid-area: info;
+        min-width: 0;
+    }
+    
+    .mobile-controls {
+        grid-area: controls;
+        justify-self: end;
+    }
+    
+    .mobile-progress {
+        grid-area: progress;
+        width: 100%;
+    }
+    
+    /* Hide desktop layout on mobile */
+    .desktop-player-layout {
+        display: none !important;
+    }
+    
+    /* Adjust control button sizes for mobile */
+    .mobile-controls button {
+        width: 3rem !important;
+        height: 3rem !important;
+    }
+}
+
+/* Song item hover effects */
+.song-item {
+    transition: all 0.2s ease-in-out;
+}
+
+.song-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Active song highlighting */
+.song-item.active {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-left: 6px solid #6b7280;
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(55, 65, 81, 0.15);
+}
+
+.song-item.active .play-btn {
+    background-color: #6b7280 !important;
+    color: white !important;
+}
+
+.song-item.active .play-btn i {
+    transform: scale(1.1);
+}
+
+/* Material Design elevation shadows */
+.elevation-1 {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+.elevation-2 {
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+}
+
+.elevation-3 {
+    box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
+
+/* Download modal styling */
+#downloadModal {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+#downloadModal .bg-white {
+    background: rgba(255, 255, 255, 0.98);
+}
