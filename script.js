@@ -1020,6 +1020,20 @@ class MuzikPlayer {
             alert('Failed to download lyrics. Please try again.');
         }
     }
+    
+    showDownloadModal() {
+        if (this.downloadModal) {
+            this.downloadModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+    
+    hideDownloadModal() {
+        if (this.downloadModal) {
+            this.downloadModal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
