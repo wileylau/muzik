@@ -109,6 +109,10 @@ class MuzikPlayer {
         this.apiStatusChip = document.getElementById('apiStatusChip');
         this.apiStatusDot = document.getElementById('apiStatusDot');
         this.apiStatusText = document.getElementById('apiStatusText');
+        
+        // Download notification elements
+        this.downloadNotification = document.getElementById('downloadNotification');
+        this.downloadNotificationText = document.getElementById('downloadNotificationText');
     }
 
     bindEvents() {
@@ -1521,10 +1525,10 @@ class MuzikPlayer {
             
             this.hideDownloadModal();
             
-            alert(`Download started: ${fileName || 'song'}`);
+            this.showDownloadNotification(`Download Started: ${fileName || 'song'}`);
             
         } catch (error) {
-            alert(`Failed to download song: ${error.message}`);
+            this.showDownloadNotification(`Download Failed: ${error.message}`);
         } finally {
             setTimeout(() => {
                 let downloadDiv;
@@ -1614,6 +1618,27 @@ class MuzikPlayer {
             
             this.apiStatusText.textContent = `${onlineCount}/${totalCount} APIs Online`;
         }
+    }
+    
+    showDownloadNotification(message = 'Download Started!') {
+        if (!this.downloadNotification || !this.downloadNotificationText) return;
+        
+        this.downloadNotificationText.textContent = message;
+        this.downloadNotification.classList.remove('hidden');
+        
+        setTimeout(() => {
+            this.downloadNotification.classList.remove('translate-x-full');
+            this.downloadNotification.classList.add('translate-x-0');
+        }, 10);
+        
+        setTimeout(() => {
+            this.downloadNotification.classList.remove('translate-x-0');
+            this.downloadNotification.classList.add('translate-x-full');
+            
+            setTimeout(() => {
+                this.downloadNotification.classList.add('hidden');
+            }, 300);
+        }, 10000);
     }
 }
 
