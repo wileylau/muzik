@@ -330,11 +330,9 @@ class MuzikPlayer {
                     </div>
                 </div>
                 <div class="flex items-center space-x-3 ml-4">
-                    ${isMobile ? `
-                        <button class="download-song-btn w-10 h-10 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200 flex items-center justify-center" data-index="${index}" title="Download Song">
-                            <i class="fas fa-download"></i>
-                        </button>
-                    ` : ''}
+                    <button class="download-song-btn w-10 h-10 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200 flex items-center justify-center" data-index="${index}" title="Download Song">
+                        <i class="fas fa-download"></i>
+                    </button>
                     <button class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-all duration-200 flex items-center justify-center play-btn group-hover:bg-gray-200">
                         <i class="fas fa-play"></i>
                     </button>
@@ -342,22 +340,11 @@ class MuzikPlayer {
             </div>
         `;
         
-        // Add download button event listener for mobile
-        if (isMobile) {
-            const downloadBtn = div.querySelector('.download-song-btn');
-            downloadBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.currentIndex = index;
-                this.currentPlaylist = [song];
-                this.currentSongData = { 
-                    songname: song.songname, 
-                    singer: song.singer, 
-                    n: song.n,
-                    ...song
-                };
-                this.showDownloadModal();
-            });
-        }
+        const downloadBtn = div.querySelector('.download-song-btn');
+        downloadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.prepareDownloadForSong(song, index);
+        });
 
         return div;
     }
@@ -1374,6 +1361,38 @@ class MuzikPlayer {
         if (this.downloadModal) {
             this.downloadModal.classList.add('hidden');
             document.body.style.overflow = 'auto';
+        }
+    }
+    
+    async prepareDownloadForSong(song, index) {
+        const originalCurrentIndex = this.currentIndex;
+        const originalCurrentSongData = this.currentSongData;
+        const originalCurrentPlaylist = this.currentPlaylist;
+        
+        this.currentIndex = index;
+        this.currentSongData = { 
+            songname: song.songname, 
+            singer: song.singer, 
+            n: song.n,
+            ...song
+        };
+        
+        if (!this.currentPlaylist.includes(song)) {
+            this.currentPlaylist = [...this.currentPlaylist];
+            if (this.currentPlaylist.length === 0) {
+                this.currentPlaylist = [song];
+                this.currentIndex = 0;
+            }
+        }
+        
+        try {
+            await this.showDownloadModal();
+        } finally {
+            if (originalCurrentIndex === -1) {
+                this.currentIndex = originalCurrentIndex;
+                this.currentSongData = originalCurrentSongData;
+                this.currentPlaylist = originalCurrentPlaylist;
+            }
         }
     }
 
