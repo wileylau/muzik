@@ -311,6 +311,10 @@ select:focus {
     box-sizing: border-box;
     max-width: 100%;
     text-align: center;
+    position: relative;
+    z-index: 9999;
+    overflow: visible;
+    white-space: nowrap;
 }
 
 /* Hide fullscreen lyrics container on mobile */
@@ -423,6 +427,10 @@ select:focus {
     max-width: 100%;
     display: block;
     text-align: center;
+    position: relative;
+    z-index: 9999;
+    overflow: visible;
+    white-space: nowrap;
 }
 
 .lyric-line.text-gray-900 {
@@ -453,7 +461,10 @@ select:focus {
         padding: 0.5rem 1rem;
         max-width: 90vw;
         margin: 0.5rem auto;
-        white-space: pre-line;
+        white-space: nowrap;
+        position: relative;
+        z-index: 9999;
+        overflow: visible;
     }
     
     .lyric-line.text-gray-900 {
