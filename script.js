@@ -11,8 +11,7 @@ class MuzikPlayer {
         this.isUserScrolling = false;
         this.apiStatus = {
             music: false,
-            lyrics: false,
-            douyin: false
+            lyrics: false
         };
         
         this.initializeElements();
@@ -393,7 +392,6 @@ class MuzikPlayer {
                 // Fetch lyrics after song is loaded
                 await this.fetchLyrics(song.songname, song.singer);
                 
-                await this.fetchAlbumArtFromDouyin(song);
                 
                 await this.checkEarly24BitInfo(song);
             } else {
@@ -405,79 +403,26 @@ class MuzikPlayer {
         }
     }
 
-    async fetchAlbumArtFromDouyin(song) {
-        const songName = song.songname || '';
-        const songArtist = song.singer || '';
-        
-        if (!songName || !songArtist) {
-            if (this.currentSongData && this.currentSongData.cover) {
-                this.updateAlbumArtWithCover(this.currentSongData.cover);
-            }
-            return;
+    transformKuWoCoverUrl(originalUrl) {
+        if (!originalUrl || typeof originalUrl !== 'string') {
+            return null;
         }
-
+                
         try {
-            const query = `${songName} ${songArtist}`;
+            const url = new URL(originalUrl);
             
-            const apiUrl = `https://www.hhlqilongzhu.cn/api/dg_douyinmusic.php?msg=${encodeURIComponent(query)}&n=1&type=json`;
-            
-            const response = await fetch(apiUrl);
-            
-            if (!response.ok) {
-                if (this.currentSongData && this.currentSongData.cover) {
-                    this.updateAlbumArtWithCover(this.currentSongData.cover);
-                }
-                return;
+            if (url.hostname.includes('kuwo.cn') || url.hostname.includes('kwcdn.kuwo.cn')) {
+                url.protocol = 'https:';
+                url.hostname = 'img3.kuwo.cn';
+                
+                url.pathname = url.pathname.replace('/320/', '/500/');
+                
+                return url.toString();
             }
             
-            const data = await response.json();
-            
-            if (!data || !data.data) {
-                if (this.currentSongData && this.currentSongData.cover) {
-                    this.updateAlbumArtWithCover(this.currentSongData.cover);
-                }
-                return;
-            }
-            
-            const track = data.data;
-            
-            if (track.title && track.singer && track.cover) {
-                const normalizeString = (str) => {
-                    if (typeof str !== 'string') return '';
-                    return str.trim().toLowerCase().replace(/\s+/g, ' ');
-                };
-                
-                const removeBrackets = (str) => {
-                    if (typeof str !== 'string') return '';
-                    return str.replace(/\[.*?\]|\(.*?\)|{.*?}|\（.*?\）|\【.*?\】/g, '').trim();
-                };
-                
-                const normalizedSongName = normalizeString(removeBrackets(songName));
-                const normalizedTrackTitle = normalizeString(removeBrackets(track.title));
-                const normalizedSongArtist = normalizeString(removeBrackets(songArtist));
-                const normalizedTrackSinger = normalizeString(removeBrackets(track.singer));
-                
-                const titleMatch = normalizedSongName === normalizedTrackTitle;
-                const singerMatch = normalizedSongArtist === normalizedTrackSinger;
-                
-                if (titleMatch && singerMatch) {
-                    this.updateAlbumArtWithCover(track.cover);
-                    
-                    if (this.currentSongData) {
-                        this.currentSongData.coverDouyin = track.cover;
-                    }
-                } else {
-                    if (this.currentSongData && this.currentSongData.cover) {
-                        this.updateAlbumArtWithCover(this.currentSongData.cover);
-                    }
-                }
-            } else if (this.currentSongData && this.currentSongData.cover) {
-                this.updateAlbumArtWithCover(this.currentSongData.cover);
-            }
+            return originalUrl;
         } catch (error) {
-            if (this.currentSongData && this.currentSongData.cover) {
-                this.updateAlbumArtWithCover(this.currentSongData.cover);
-            }
+            return originalUrl;
         }
     }
     
@@ -599,6 +544,12 @@ class MuzikPlayer {
             this.currentSongLink = playData.link;
             this.currentAudioUrl = playData.flac_url;
             
+            if (playData.cover) {
+                const transformedCoverUrl = this.transformKuWoCoverUrl(playData.cover);
+                if (transformedCoverUrl) {
+                    this.updateAlbumArtWithCover(transformedCoverUrl);
+                }
+            }
         }
     }
 
@@ -1586,13 +1537,11 @@ class MuzikPlayer {
         // Check all APIs concurrently
         const checks = await Promise.allSettled([
             this.checkMusicAPI(),
-            this.checkLyricsAPI(),
-            this.checkDouyinAPI()
+            this.checkLyricsAPI()
         ]);
         
         this.apiStatus.music = checks[0].status === 'fulfilled' && checks[0].value;
         this.apiStatus.lyrics = checks[1].status === 'fulfilled' && checks[1].value;
-        this.apiStatus.douyin = checks[2].status === 'fulfilled' && checks[2].value;
         
         this.updateAPIStatusDisplay('complete');
     }
@@ -1621,17 +1570,6 @@ class MuzikPlayer {
         }
     }
     
-    async checkDouyinAPI() {
-        try {
-            const response = await fetch(`https://www.hhlqilongzhu.cn/api/dg_douyinmusic.php?msg=test&n=1&type=json`, {
-                method: 'GET',
-                timeout: 5000
-            });
-            return response.ok;
-        } catch (error) {
-            return false;
-        }
-    }
     
     updateAPIStatusDisplay(state) {
         if (!this.apiStatusChip || !this.apiStatusDot || !this.apiStatusText) return;
