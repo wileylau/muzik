@@ -9,10 +9,16 @@ class MuzikPlayer {
         this.currentLyricsText = '';
         this.lyricsScrollTimeout = null;
         this.isUserScrolling = false;
+        this.apiStatus = {
+            music: false,
+            lyrics: false,
+            douyin: false
+        };
         
         this.initializeElements();
         this.bindEvents();
         this.showPlayerByDefault();
+        this.checkAPIStatus();
     }
 
     initializeElements() {
@@ -99,6 +105,11 @@ class MuzikPlayer {
         
         // 24-bit API endpoint
         this.api24BitBase = 'https://www.hhlqilongzhu.cn/api/dg_mgmusic_24bit.php';
+        
+        // API Status elements
+        this.apiStatusChip = document.getElementById('apiStatusChip');
+        this.apiStatusDot = document.getElementById('apiStatusDot');
+        this.apiStatusText = document.getElementById('apiStatusText');
     }
 
     bindEvents() {
@@ -1566,6 +1577,85 @@ class MuzikPlayer {
                     }
                 }
             }, 1000);
+        }
+    }
+    
+    async checkAPIStatus() {
+        this.updateAPIStatusDisplay('checking');
+        
+        // Check all APIs concurrently
+        const checks = await Promise.allSettled([
+            this.checkMusicAPI(),
+            this.checkLyricsAPI(),
+            this.checkDouyinAPI()
+        ]);
+        
+        this.apiStatus.music = checks[0].status === 'fulfilled' && checks[0].value;
+        this.apiStatus.lyrics = checks[1].status === 'fulfilled' && checks[1].value;
+        this.apiStatus.douyin = checks[2].status === 'fulfilled' && checks[2].value;
+        
+        this.updateAPIStatusDisplay('complete');
+    }
+    
+    async checkMusicAPI() {
+        try {
+            const response = await fetch(`${this.apiBase}?msg=test&num=1&br=1&type=json`, {
+                method: 'GET',
+                timeout: 5000
+            });
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    async checkLyricsAPI() {
+        try {
+            const response = await fetch(`${this.lyricsApiBase}?msg=test&n=1&type=2`, {
+                method: 'GET',
+                timeout: 5000
+            });
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    async checkDouyinAPI() {
+        try {
+            const response = await fetch(`https://www.hhlqilongzhu.cn/api/dg_douyinmusic.php?msg=test&n=1&type=json`, {
+                method: 'GET',
+                timeout: 5000
+            });
+            return response.ok;
+        } catch (error) {
+            return false;
+        }
+    }
+    
+    updateAPIStatusDisplay(state) {
+        if (!this.apiStatusChip || !this.apiStatusDot || !this.apiStatusText) return;
+        
+        if (state === 'checking') {
+            this.apiStatusChip.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 bg-yellow-100 text-yellow-800';
+            this.apiStatusDot.className = 'w-2 h-2 rounded-full bg-yellow-500 animate-pulse';
+            this.apiStatusText.textContent = 'Checking APIs...';
+        } else if (state === 'complete') {
+            const onlineCount = Object.values(this.apiStatus).filter(status => status).length;
+            const totalCount = Object.keys(this.apiStatus).length;
+            
+            if (onlineCount === totalCount) {
+                this.apiStatusChip.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 bg-green-100 text-green-800';
+                this.apiStatusDot.className = 'w-2 h-2 rounded-full bg-green-500';
+            } else if (onlineCount > 0) {
+                this.apiStatusChip.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 bg-yellow-100 text-yellow-800';
+                this.apiStatusDot.className = 'w-2 h-2 rounded-full bg-yellow-500';
+            } else {
+                this.apiStatusChip.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 bg-red-100 text-red-800';
+                this.apiStatusDot.className = 'w-2 h-2 rounded-full bg-red-500';
+            }
+            
+            this.apiStatusText.textContent = `${onlineCount}/${totalCount} APIs Online`;
         }
     }
 }
