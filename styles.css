@@ -315,6 +315,9 @@ select:focus {
     z-index: 9999;
     overflow: visible;
     white-space: nowrap;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 /* Hide fullscreen lyrics container on mobile */
@@ -431,6 +434,9 @@ select:focus {
     z-index: 9999;
     overflow: visible;
     white-space: nowrap;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 .lyric-line.text-gray-900 {

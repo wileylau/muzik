@@ -7,6 +7,8 @@ class MuzikPlayer {
         this.lyricsApiBase = 'https://www.hhlqilongzhu.cn/api/dg_geci.php';
         this.currentLyrics = [];
         this.currentLyricsText = '';
+        this.lyricsScrollTimeout = null;
+        this.isUserScrolling = false;
         
         this.initializeElements();
         this.bindEvents();
@@ -195,6 +197,18 @@ class MuzikPlayer {
         
         if (this.fullscreenProgressBar && this.fullscreenProgressBar.parentElement) {
             this.fullscreenProgressBar.parentElement.addEventListener('click', (e) => this.seekToFullscreen(e));
+        }
+        
+        if (this.lyricsList) {
+            this.lyricsList.addEventListener('scroll', () => this.handleLyricsScroll());
+            this.lyricsList.addEventListener('touchstart', () => this.handleLyricsInteraction());
+            this.lyricsList.addEventListener('mousedown', () => this.handleLyricsInteraction());
+        }
+        
+        if (this.fullscreenLyricsList) {
+            this.fullscreenLyricsList.addEventListener('scroll', () => this.handleLyricsScroll());
+            this.fullscreenLyricsList.addEventListener('touchstart', () => this.handleLyricsInteraction());
+            this.fullscreenLyricsList.addEventListener('mousedown', () => this.handleLyricsInteraction());
         }
     }
 
@@ -1041,9 +1055,10 @@ class MuzikPlayer {
                 this.lyricsList.innerHTML = '';
                 this.currentLyrics.forEach((lyric, index) => {
                     const lyricElement = document.createElement('div');
-                    lyricElement.className = 'lyric-line py-2 px-4 rounded-lg transition-all duration-200';
+                    lyricElement.className = 'lyric-line py-2 px-4 rounded-lg transition-all duration-200 cursor-pointer hover:bg-gray-100';
                     lyricElement.dataset.time = lyric.time;
                     lyricElement.textContent = lyric.text;
+                    lyricElement.addEventListener('click', () => this.seekToLyricTime(lyric.time));
                     this.lyricsList.appendChild(lyricElement);
                 });
             }
@@ -1057,9 +1072,10 @@ class MuzikPlayer {
                 this.fullscreenLyricsList.innerHTML = '';
                 this.currentLyrics.forEach((lyric, index) => {
                     const lyricElement = document.createElement('div');
-                    lyricElement.className = 'lyric-line py-2 px-4 rounded-lg transition-all duration-200';
+                    lyricElement.className = 'lyric-line py-2 px-4 rounded-lg transition-all duration-200 cursor-pointer hover:bg-gray-100';
                     lyricElement.dataset.time = lyric.time;
                     lyricElement.textContent = lyric.text;
+                    lyricElement.addEventListener('click', () => this.seekToLyricTime(lyric.time));
                     this.fullscreenLyricsList.appendChild(lyricElement);
                 });
             }
@@ -1100,11 +1116,12 @@ class MuzikPlayer {
                 currentLine.style.transform = 'scale(1.2)';
                 currentLine.style.transformOrigin = 'center'; // Center transform origin for mobile
                 
-                // Scroll to the active lyric
-                currentLine.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
+                if (!this.isUserScrolling) {
+                    currentLine.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
             }
         }
         
@@ -1137,11 +1154,13 @@ class MuzikPlayer {
                 currentLine.style.transform = 'scale(1.2)';
                 currentLine.style.transformOrigin = 'center'; // Center transform origin for desktop
                 
-                // Scroll to the active lyric
-                currentLine.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
+                // Only scroll to the active lyric if user is not scrolling
+                if (!this.isUserScrolling) {
+                    currentLine.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
             }
         }
     }
@@ -1202,6 +1221,28 @@ class MuzikPlayer {
         if (!isNaN(duration)) {
             this.audioElement.currentTime = duration * percentage;
         }
+    }
+    
+    seekToLyricTime(time) {
+        if (this.audioElement && !isNaN(time)) {
+            this.audioElement.currentTime = time;
+        }
+    }
+    
+    handleLyricsScroll() {
+        this.handleLyricsInteraction();
+    }
+    
+    handleLyricsInteraction() {
+        this.isUserScrolling = true;
+        
+        if (this.lyricsScrollTimeout) {
+            clearTimeout(this.lyricsScrollTimeout);
+        }
+        
+        this.lyricsScrollTimeout = setTimeout(() => {
+            this.isUserScrolling = false;
+        }, 5000);
     }
     
     downloadLyrics() {
