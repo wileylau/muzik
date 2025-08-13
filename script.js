@@ -368,7 +368,7 @@ class MuzikPlayer {
                 // Fetch lyrics after song is loaded
                 await this.fetchLyrics(song.songname, song.singer);
                 
-                await this.fetchAlbumArtFrom24Bit(song);
+                await this.fetchAlbumArtFromDouyin(song);
                 
                 await this.checkEarly24BitInfo(song);
             } else {
@@ -380,7 +380,7 @@ class MuzikPlayer {
         }
     }
 
-    async fetchAlbumArtFrom24Bit(song) {
+    async fetchAlbumArtFromDouyin(song) {
         const songName = song.songname || '';
         const songArtist = song.singer || '';
         
@@ -394,7 +394,7 @@ class MuzikPlayer {
         try {
             const query = `${songName} ${songArtist}`;
             
-            const apiUrl = `${this.api24BitBase}?msg=${encodeURIComponent(query)}&n=1&type=json`;
+            const apiUrl = `https://www.hhlqilongzhu.cn/api/dg_douyinmusic.php?msg=${encodeURIComponent(query)}&n=1&type=json`;
             
             const response = await fetch(apiUrl);
             
@@ -407,16 +407,16 @@ class MuzikPlayer {
             
             const data = await response.json();
             
-            if (!data) {
+            if (!data || !data.data) {
                 if (this.currentSongData && this.currentSongData.cover) {
                     this.updateAlbumArtWithCover(this.currentSongData.cover);
                 }
                 return;
             }
             
-            if (data.code === 200 && data.title && data.singer && data.cover) {
-                const track = data;
-                
+            const track = data.data;
+            
+            if (track.title && track.singer && track.cover) {
                 const normalizeString = (str) => {
                     if (typeof str !== 'string') return '';
                     return str.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -439,7 +439,7 @@ class MuzikPlayer {
                     this.updateAlbumArtWithCover(track.cover);
                     
                     if (this.currentSongData) {
-                        this.currentSongData.cover24Bit = track.cover;
+                        this.currentSongData.coverDouyin = track.cover;
                     }
                 } else {
                     if (this.currentSongData && this.currentSongData.cover) {
