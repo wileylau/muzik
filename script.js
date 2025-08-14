@@ -977,6 +977,10 @@ class MuzikPlayer {
         const lines = lyricsText.split('\n');
         
         lines.forEach(line => {
+if (line.match(/^\[(ti|ar|al|by|offset):.*\]$/)) {
+                return;
+            }
+            
             // Match lines that start with timestamp like [00:17.81]
             const timestampMatch = line.match(/^\[(\d{2}):(\d{2})\.(\d{2})\](.*)$/);
             if (timestampMatch) {
