@@ -792,6 +792,8 @@ class MuzikPlayer {
             return;
         }
         
+        const header = document.querySelector('header');
+        
         if (this.compactSearch.classList.contains('hidden')) {
             this.mainSearchSection.style.transform = 'translateY(-30px) scale(0.95)';
             this.mainSearchSection.style.opacity = '0';
@@ -808,12 +810,18 @@ class MuzikPlayer {
                 setTimeout(() => {
                     this.compactSearch.style.transform = 'translateX(0) scale(1)';
                     this.compactSearch.style.opacity = '1';
+                    
+                    if (header) {
+                        header.classList.add('header-with-compact-search');
+                    }
                 }, 50);
             }, 250);
         }
     }
 
     restoreMainSearch() {
+        const header = document.querySelector('header');
+        
         if (!this.compactSearch.classList.contains('hidden')) {
             this.compactSearch.style.transform = 'translateX(50px) scale(0.9)';
             this.compactSearch.style.opacity = '0';
@@ -830,6 +838,10 @@ class MuzikPlayer {
                 setTimeout(() => {
                     this.mainSearchSection.style.transform = 'translateY(0) scale(1)';
                     this.mainSearchSection.style.opacity = '1';
+                    
+                    if (header) {
+                        header.classList.remove('header-with-compact-search');
+                    }
                 }, 50);
             }, 250);
         }

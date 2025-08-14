@@ -13,6 +13,15 @@ body {
     width: 100%;
 }
 
+@media (min-width: 769px) {
+    .header-with-compact-search #apiStatusChip {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-left: 0;
+    }
+}
+
 html {
     height: 100%;
     overflow: hidden;
