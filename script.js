@@ -1537,7 +1537,7 @@ class MuzikPlayer {
                 
                 // Keep resending request until flac_url contains "trackmedia" or we've tried 3 times
                 let retryCount = 0;
-                const maxRetries = 3;
+                const maxRetries = 5;
                 while (data && data.flac_url && !data.flac_url.includes('trackmedia') && retryCount < maxRetries) {
                     console.log('Ad Detected; resending request');
                     retryCount++;
