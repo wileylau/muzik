@@ -1139,14 +1139,10 @@ class MuzikPlayer {
             
             // Update album art
             if (this.lyricsAlbumArt && this.currentSongData && this.currentSongData.cover) {
-                this.lyricsAlbumArt.src = this.currentSongData.cover;
-                this.lyricsAlbumArt.classList.remove('hidden');
-                const container = this.lyricsAlbumArt.closest('.album-art-container');
-                if (container) container.classList.add('has-album-art');
+                const transformedCoverUrl = this.transformKuWoCoverUrl(this.currentSongData.cover);
+                this.preloadAndSetAlbumArt(this.lyricsAlbumArt, transformedCoverUrl);
             } else if (this.lyricsAlbumArt) {
-                this.lyricsAlbumArt.classList.add('hidden');
-                const container = this.lyricsAlbumArt.closest('.album-art-container');
-                if (container) container.classList.remove('has-album-art');
+                this.hideAlbumArt(this.lyricsAlbumArt);
             }
             
             // Update duration
