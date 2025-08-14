@@ -1623,12 +1623,14 @@ class MuzikPlayer {
             }
             
             if (isMuzikApp) {
+                const jsonFormat = format === '24bit' ? 'flac' : format;
+                
                 const jsonData = {
                     title: song.songname || 'Unknown Title',
                     artist: song.singer || 'Unknown Artist',
                     albumArt: this.transformKuWoCoverUrl(song.cover || this.currentSongCover || ''),
                     downloadUrl: downloadUrl,
-                    format: format
+                    format: jsonFormat
                 };
                 
                 const jsonContent = JSON.stringify(jsonData, null, 2);
