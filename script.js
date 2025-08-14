@@ -787,6 +787,12 @@ class MuzikPlayer {
         return div.innerHTML;
     }
 
+    decodeHtmlEntities(text) {
+        const textArea = document.createElement('textarea');
+        textArea.innerHTML = text;
+        return textArea.value;
+    }
+
     moveSearchToNavbar() {
         if (window.innerWidth <= 768) {
             return;
@@ -977,7 +983,7 @@ class MuzikPlayer {
         const lines = lyricsText.split('\n');
         
         lines.forEach(line => {
-if (line.match(/^\[(ti|ar|al|by|offset):.*\]$/)) {
+            if (line.match(/^\[(ti|ar|al|by|offset):.*\]$/)) {
                 return;
             }
             
@@ -988,13 +994,15 @@ if (line.match(/^\[(ti|ar|al|by|offset):.*\]$/)) {
                 const seconds = parseInt(timestampMatch[2]);
                 const centiseconds = parseInt(timestampMatch[3]);
                 const text = timestampMatch[4].trim();
+
+                const decodedText = this.decodeHtmlEntities(text);
                 
                 // Convert to total seconds
                 const timeInSeconds = minutes * 60 + seconds + centiseconds / 100;
                 
                 this.currentLyrics.push({
                     time: timeInSeconds,
-                    text: text
+                    text: decodedText
                 });
             }
         });
