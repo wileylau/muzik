@@ -994,7 +994,11 @@ class MuzikPlayer {
                 const seconds = parseInt(timestampMatch[2]);
                 const centiseconds = parseInt(timestampMatch[3]);
                 const text = timestampMatch[4].trim();
-
+                
+                if (text.length === 0) {
+                    return;
+                }
+                
                 const decodedText = this.decodeHtmlEntities(text);
                 
                 // Convert to total seconds
