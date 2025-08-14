@@ -377,8 +377,14 @@ class MuzikPlayer {
                 data = await response.json();
             }
             
-            if (retryCount >= maxRetries && data && data.flac_url && !data.flac_url.includes('trackmedia')) {
-                throw new Error('Download failed, try again later');
+            if (retryCount >= maxRetries && data && data.flac_url) {
+                if (data.flac_url.includes('trackmedia')) {
+                } else {
+                    const isLongTrack = await this.checkAudioDuration(data.flac_url);
+                    if (!isLongTrack) {
+                        throw new Error('Download failed, try again later');
+                    }
+                }
             }
 
             if (data && data.flac_url) {
@@ -792,6 +798,43 @@ class MuzikPlayer {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = Math.floor(seconds % 60);
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    // Check if audio duration is longer than 15 seconds
+    checkAudioDuration(url) {
+        return new Promise((resolve) => {
+            // Create a temporary audio element to check duration
+            const tempAudio = new Audio();
+            
+            // Clean up function
+            const cleanup = () => {
+                tempAudio.removeEventListener('loadedmetadata', onLoadedMetadata);
+                tempAudio.removeEventListener('error', onError);
+                tempAudio.src = ''; // Release the resource
+            };
+            
+            // Event handlers
+            const onLoadedMetadata = () => {
+                const duration = tempAudio.duration;
+                cleanup();
+                // Resolve true if duration is longer than 15 seconds
+                resolve(duration > 15);
+            };
+            
+            const onError = () => {
+                cleanup();
+                // If there's an error loading, assume it's not a long track (treat as ad)
+                resolve(false);
+            };
+            
+            // Set up event listeners
+            tempAudio.addEventListener('loadedmetadata', onLoadedMetadata);
+            tempAudio.addEventListener('error', onError);
+            
+            // Set the source and load
+            tempAudio.src = url;
+            tempAudio.load();
+        });
     }
 
     escapeHtml(text) {
@@ -1546,8 +1589,18 @@ class MuzikPlayer {
                     data = await response.json();
                 }
                 
-                if (retryCount >= maxRetries && data && data.flac_url && !data.flac_url.includes('trackmedia')) {
-                    throw new Error('Download failed, try again later');
+                // Check if it's an ad by verifying it's either longer than 15 seconds or contains 'trackmedia'
+                if (retryCount >= maxRetries && data && data.flac_url) {
+                    // If it contains 'trackmedia', it's not an ad
+                    if (data.flac_url.includes('trackmedia')) {
+                        // Not an ad, continue
+                    } else {
+                        // Check actual audio duration by loading it
+                        const isLongTrack = await this.checkAudioDuration(data.flac_url);
+                        if (!isLongTrack) {
+                            throw new Error('Download failed, try again later');
+                        }
+                    }
                 }
                 
                 if (format === 'flac') {
