@@ -982,7 +982,7 @@ if (line.match(/^\[(ti|ar|al|by|offset):.*\]$/)) {
             }
             
             // Match lines that start with timestamp like [00:17.81]
-            const timestampMatch = line.match(/^\[(\d{2}):(\d{2})\.(\d{2})\](.*)$/);
+            const timestampMatch = line.match(/^\[(\d{1,2}):(\d{2})\.(\d{2})\](.*)$/);
             if (timestampMatch) {
                 const minutes = parseInt(timestampMatch[1]);
                 const seconds = parseInt(timestampMatch[2]);
