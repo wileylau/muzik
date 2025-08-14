@@ -14,6 +14,9 @@ class MuzikPlayer {
             lyrics: false
         };
         
+        this.tempDownloadSongId = null;
+        this.tempDownloadSong = null;
+        
         this.initializeElements();
         this.bindEvents();
         this.showPlayerByDefault();
@@ -1333,6 +1336,31 @@ class MuzikPlayer {
     }
     
     async check24BitAvailability() {
+        if (this.tempDownloadSongId) {
+            const song = this.tempDownloadSong;
+            const songName = song.songname || '';
+            const songArtist = song.singer || '';
+            
+            if (!songName || !songArtist) {
+                if (this.download24Bit) this.download24Bit.classList.add('hidden');
+                return;
+            }
+            
+            if (song.has24Bit && song.musicUrl24Bit) {
+                if (this.download24Bit) {
+                    this.download24Bit.classList.remove('hidden');
+                    const artist = song.singer || 'Unknown Artist';
+                    const title = song.songname || 'Unknown Title';
+                    const fileName = `${artist} - ${title} (24Bit).flac`;
+                    this.download24Bit.href = song.musicUrl24Bit;
+                    this.download24Bit.download = fileName;
+                    this.download24Bit.target = '_blank';
+                }
+                return;
+            }
+            
+        }
+        
         if (this.currentSongData && this.currentSongData.has24Bit) {
             if (this.currentSongData.musicUrl24Bit) {
                 if (this.download24Bit) {
@@ -1350,12 +1378,16 @@ class MuzikPlayer {
             return;
         }
         
-        if (this.currentIndex < 0 || this.currentIndex >= this.currentPlaylist.length) {
-            if (this.download24Bit) this.download24Bit.classList.add('hidden');
-            return;
+        let song;
+        if (this.tempDownloadSongId) {
+            song = this.tempDownloadSong;
+            if (this.currentIndex < 0 || this.currentIndex >= this.currentPlaylist.length) {
+                if (this.download24Bit) this.download24Bit.classList.add('hidden');
+                return;
+            }
+            song = this.currentPlaylist[this.currentIndex];
         }
-
-        const song = this.currentPlaylist[this.currentIndex];
+        
         const songName = song.songname || '';
         const songArtist = song.singer || '';
         
@@ -1392,7 +1424,7 @@ class MuzikPlayer {
                 
                 const removeBrackets = (str) => {
                     if (typeof str !== 'string') return '';
-                    return str.replace(/\[.*?\]|\(.*?\)|{.*?}|\（.*?\）|\【.*?\】/g, '').trim();
+                    return str.replace(/\[.*?\]|\(.*?\)|{.*?}|\（.*?）|\【.*?】/g, '').trim();
                 };
                 
                 const normalizedSongName = normalizeString(removeBrackets(songName));
@@ -1446,48 +1478,35 @@ class MuzikPlayer {
             this.downloadModal.classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
+        
+        if (this.tempDownloadSongId) {
+            this.tempDownloadSongId = null;
+            this.tempDownloadSong = null;
+        }
     }
     
     async prepareDownloadForSong(song, index) {
-        const originalCurrentIndex = this.currentIndex;
-        const originalCurrentSongData = this.currentSongData;
-        const originalCurrentPlaylist = this.currentPlaylist;
-        
-        this.currentIndex = index;
-        this.currentSongData = { 
-            songname: song.songname, 
-            singer: song.singer, 
-            n: song.n,
-            ...song
-        };
-        
-        if (!this.currentPlaylist.includes(song)) {
-            this.currentPlaylist = [...this.currentPlaylist];
-            if (this.currentPlaylist.length === 0) {
-                this.currentPlaylist = [song];
-                this.currentIndex = 0;
-            }
-        }
-        
-        try {
-            await this.showDownloadModal();
-        } finally {
-            if (originalCurrentIndex === -1) {
-                this.currentIndex = originalCurrentIndex;
-                this.currentSongData = originalCurrentSongData;
-                this.currentPlaylist = originalCurrentPlaylist;
-            }
-        }
+        this.tempDownloadSongId = song.n;
+        this.tempDownloadSong = song; 
+        await this.showDownloadModal();
     }
 
     async prepareAndDownload(format) {
-        if (this.currentIndex < 0 || this.currentIndex >= this.currentPlaylist.length) {
-            this.showDownloadNotification('Download Failed: No song selected for download');
-            return;
+        let song;
+        let songId;
+        
+        if (this.tempDownloadSongId) {
+            songId = this.tempDownloadSongId;
+            song = this.tempDownloadSong; // Use the stored song object for metadata
+        } else {
+            if (this.currentIndex < 0 || this.currentIndex >= this.currentPlaylist.length) {
+                this.showDownloadNotification('Download Failed: No song selected for download');
+                return;
+            }
+            
+            song = this.currentPlaylist[this.currentIndex];
+            songId = song.n;
         }
-
-        const song = this.currentPlaylist[this.currentIndex];
-        const songId = song.n;
         
         if (!songId && format !== '24bit') {
             this.showDownloadNotification('Download Failed: Unable to download song - Missing song ID');
@@ -1568,9 +1587,9 @@ class MuzikPlayer {
             } else {
                 const br = format === 'flac' ? 1 : 2;
                 
-                const originalQuery = this.searchInput.value.trim();
+                const songQuery = `${song.songname || ''} ${song.singer || ''}`.trim();
                 
-                let response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=${br}&type=json`);
+                let response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(songQuery)}&n=1&br=${br}&type=json`);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -1582,10 +1601,9 @@ class MuzikPlayer {
                 let retryCount = 0;
                 const maxRetries = 5;
                 while (data && data.flac_url && !data.flac_url.includes('trackmedia') && retryCount < maxRetries) {
-                    console.log('Ad Detected; resending request');
                     retryCount++;
                     await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
-                    response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=${br}&type=json`);
+                    response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(songQuery)}&n=1&br=${br}&type=json`);
                     data = await response.json();
                 }
                 
