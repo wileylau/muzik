@@ -729,8 +729,8 @@ class MuzikPlayer {
                 mainElement.style.height = 'calc(100vh - 120px)';
                 mainElement.style.paddingBottom = '120px';
             } else {
-                mainElement.style.height = 'calc(100vh - 80px)';
-                mainElement.style.paddingBottom = '80px';
+                mainElement.style.height = 'calc(100vh - 70px)';
+                mainElement.style.paddingBottom = '70px';
             }
         }
         

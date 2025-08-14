@@ -37,10 +37,24 @@ main {
 
 /* Allow scrolling within specific containers */
 #resultsList,
-#searchResults,
 #mainSearchSection {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+}
+
+#searchResults {
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 769px) {
+    #searchResults {
+        max-height: calc(100vh - 250px);
+    }
+    
+    #resultsList {
+        max-height: calc(100vh - 300px);
+    }
 }
 
 /* Search animation styles */
@@ -196,6 +210,19 @@ select:focus {
     background: #9ca3af;
 }
 
+#searchResults {
+    overflow-y: hidden;
+}
+
+#searchResults::-webkit-scrollbar {
+    display: none;
+}
+
+#searchResults {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
 /* Loading animation enhancement */
 @keyframes pulse {
     0%, 100% {
@@ -213,7 +240,7 @@ select:focus {
 /* Desktop Player Layout */
 .desktop-player-layout {
     display: flex;
-    height: 80px;
+    height: 70px;
 }
 
 .desktop-player-controls {
