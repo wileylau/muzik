@@ -365,8 +365,14 @@ class MuzikPlayer {
 
         try {
             const originalQuery = this.searchInput.value.trim();
-            const response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=2&type=json`);
-            const data = await response.json();
+            let response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=2&type=json`);
+            let data = await response.json();
+
+            while (data && data.flac_url && !data.flac_url.includes('trackmedia')) {
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+                response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=2&type=json`);
+                data = await response.json();
+            }
 
             if (data && data.flac_url) {
                 this.audioElement.src = data.flac_url;
@@ -1511,13 +1517,21 @@ class MuzikPlayer {
                 
                 const originalQuery = this.searchInput.value.trim();
                 
-                const response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=${br}&type=json`);
+                let response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=${br}&type=json`);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
-                const data = await response.json();
+                let data = await response.json();
+                
+                // Keep resending request until flac_url contains "trackmedia"
+                while (data && data.flac_url && !data.flac_url.includes('trackmedia')) {
+                    console.log('Ad Detected; resending request');
+                    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+                    response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=${br}&type=json`);
+                    data = await response.json();
+                }
                 
                 if (format === 'flac') {
                     downloadUrl = data.flac_url;
