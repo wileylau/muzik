@@ -368,10 +368,17 @@ class MuzikPlayer {
             let response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=2&type=json`);
             let data = await response.json();
 
-            while (data && data.flac_url && !data.flac_url.includes('trackmedia')) {
+            let retryCount = 0;
+            const maxRetries = 3;
+            while (data && data.flac_url && !data.flac_url.includes('trackmedia') && retryCount < maxRetries) {
                 await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+                retryCount++;
                 response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=2&type=json`);
                 data = await response.json();
+            }
+            
+            if (retryCount >= maxRetries && data && data.flac_url && !data.flac_url.includes('trackmedia')) {
+                throw new Error('Play failed, try again later');
             }
 
             if (data && data.flac_url) {
@@ -1528,12 +1535,19 @@ class MuzikPlayer {
                 
                 let data = await response.json();
                 
-                // Keep resending request until flac_url contains "trackmedia"
-                while (data && data.flac_url && !data.flac_url.includes('trackmedia')) {
+                // Keep resending request until flac_url contains "trackmedia" or we've tried 3 times
+                let retryCount = 0;
+                const maxRetries = 3;
+                while (data && data.flac_url && !data.flac_url.includes('trackmedia') && retryCount < maxRetries) {
                     console.log('Ad Detected; resending request');
+                    retryCount++;
                     await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
                     response = await fetch(`${this.apiBase}?msg=${encodeURIComponent(originalQuery)}&n=${songId}&br=${br}&type=json`);
                     data = await response.json();
+                }
+                
+                if (retryCount >= maxRetries && data && data.flac_url && !data.flac_url.includes('trackmedia')) {
+                    throw new Error('Download failed, try again later');
                 }
                 
                 if (format === 'flac') {
