@@ -1578,19 +1578,17 @@ class MuzikPlayer {
                     format: format
                 };
                 
-                const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
-                const jsonUrl = URL.createObjectURL(blob);
+                const jsonContent = JSON.stringify(jsonData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonContent);
                 
                 const link = document.createElement('a');
-                link.href = jsonUrl;
+                link.href = dataUri;
                 link.download = `${song.singer || 'Unknown Artist'} - ${song.songname || 'Unknown Title'}.json`;
                 link.target = '_blank';
                 
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                
-                URL.revokeObjectURL(jsonUrl);
             } else {
                 const link = document.createElement('a');
                 link.href = downloadUrl;
