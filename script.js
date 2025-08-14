@@ -378,7 +378,7 @@ class MuzikPlayer {
             }
             
             if (retryCount >= maxRetries && data && data.flac_url && !data.flac_url.includes('trackmedia')) {
-                throw new Error('Play failed, try again later');
+                throw new Error('Download failed, try again later');
             }
 
             if (data && data.flac_url) {
@@ -403,7 +403,7 @@ class MuzikPlayer {
             }
         } catch (error) {
             console.error('Play error:', error);
-            alert('Failed to play song. Please try another one.');
+            this.showDownloadNotification('Failed to play song. Please try another one.');
         }
     }
 
@@ -1237,7 +1237,7 @@ class MuzikPlayer {
     
     downloadLyrics() {
         if (!this.currentLyricsText) {
-            alert('No lyrics available for download');
+            this.showDownloadNotification('Download Failed: No lyrics available for download');
             return;
         }
         
@@ -1262,7 +1262,7 @@ class MuzikPlayer {
             URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Lyrics download error:', error);
-            alert('Failed to download lyrics. Please try again.');
+            this.showDownloadNotification('Download Failed: Failed to download lyrics. Please try again.');
         }
     }
     
@@ -1439,7 +1439,7 @@ class MuzikPlayer {
 
     async prepareAndDownload(format) {
         if (this.currentIndex < 0 || this.currentIndex >= this.currentPlaylist.length) {
-            alert('No song selected for download');
+            this.showDownloadNotification('Download Failed: No song selected for download');
             return;
         }
 
@@ -1447,7 +1447,7 @@ class MuzikPlayer {
         const songId = song.n;
         
         if (!songId && format !== '24bit') {
-            alert('Unable to download song: Missing song ID');
+            this.showDownloadNotification('Download Failed: Unable to download song - Missing song ID');
             return;
         }
 
@@ -1463,7 +1463,7 @@ class MuzikPlayer {
             } else if (format === '24bit') {
                 downloadDiv = this.download24Bit;
             } else {
-                alert('Unsupported format');
+                this.showDownloadNotification('Download Failed: Unsupported format');
                 return;
             }
             
@@ -1700,7 +1700,15 @@ class MuzikPlayer {
     showDownloadNotification(message = 'Download Started!') {
         if (!this.downloadNotification || !this.downloadNotificationText) return;
         
+        const isFailure = message.toLowerCase().includes('failed') || message.toLowerCase().includes('error') || message.toLowerCase().includes('try again');
         this.downloadNotificationText.textContent = message;
+        
+        if (isFailure) {
+            this.downloadNotification.className = 'hidden fixed top-6 right-6 z-50 bg-red-100 border border-red-200 text-red-800 px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 transition-all duration-300 transform translate-x-full';
+        } else {
+            this.downloadNotification.className = 'hidden fixed top-6 right-6 z-50 bg-green-100 border border-green-200 text-green-800 px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 transition-all duration-300 transform translate-x-full';
+        }
+        
         this.downloadNotification.classList.remove('hidden');
         
         setTimeout(() => {
