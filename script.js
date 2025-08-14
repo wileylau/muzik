@@ -156,7 +156,7 @@ class MuzikPlayer {
         
         if (this.download24Bit) {
             this.download24Bit.addEventListener('click', () => {
-                this.hideDownloadModal();
+                this.prepareAndDownload('24bit');
             });
         }
         
@@ -1444,6 +1444,9 @@ class MuzikPlayer {
             return;
         }
 
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        const isMuzikApp = userAgent.includes('MuzikApp');
+
         try {
             let downloadDiv;
             if (format === 'mp3') {
@@ -1487,7 +1490,7 @@ class MuzikPlayer {
                     
                     const removeBrackets = (str) => {
                         if (typeof str !== 'string') return '';
-                        return str.replace(/\[.*?\]|\(.*?\)|{.*?}|\（.*?\）|\【.*?\】/g, '').trim();
+                        return str.replace(/\[.*?\]|\(.*?\)|{.*?}|\（.*?）|\【.*?】/g, '').trim();
                     };
                     
                     const normalizedSongName = normalizeString(removeBrackets(songName));
@@ -1552,14 +1555,38 @@ class MuzikPlayer {
                 throw new Error('Download URL not found');
             }
             
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.download = fileName || `song.${format}`;
-            link.target = '_blank';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            if (isMuzikApp) {
+                const jsonData = {
+                    title: song.songname || 'Unknown Title',
+                    artist: song.singer || 'Unknown Artist',
+                    albumArt: this.transformKuWoCoverUrl(song.cover || this.currentSongCover || ''),
+                    downloadUrl: downloadUrl,
+                    format: format
+                };
+                
+                const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+                const jsonUrl = URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = jsonUrl;
+                link.download = `${song.singer || 'Unknown Artist'} - ${song.songname || 'Unknown Title'}.json`;
+                link.target = '_blank';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                URL.revokeObjectURL(jsonUrl);
+            } else {
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = fileName || `song.${format}`;
+                link.target = '_blank';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
             
             this.hideDownloadModal();
             
