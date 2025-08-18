@@ -1578,6 +1578,10 @@ class MuzikPlayer {
                         (qualityMatch && hasMusicUrl)) {
                         downloadUrl = track.music_url;
                         fileName = `${songArtist} - ${songName} (24Bit).flac`;
+                        
+                        if (track.cover && !song.cover) {
+                            song.cover = track.cover;
+                        }
                     } else {
                         throw new Error('24-bit track validation failed - mismatch in track data');
                     }
@@ -1629,6 +1633,10 @@ class MuzikPlayer {
                 
                 if (!downloadUrl) {
                     throw new Error('Download URL not found in API response');
+                }
+                
+                if (data.cover && !song.cover) {
+                    song.cover = data.cover;
                 }
                 
                 const artist = song.singer || 'Unknown Artist';
